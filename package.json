@@ -1,0 +1,27 @@
+{
+  "name": "@castlelemongrab/iniedit",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "A simple command-line INI file editing tool based on ini-parser",
+  "author": "Castle Lemongrab, a subsidiary of Baby Britain, Ltd.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/castlelemongrab/iniedit.git"
+  },
+  "dependencies": {
+    "@castlelemongrab/strr": "0.0.1",
+    "@jedmao/ini-parser": "^0.2.4",
+    "yargs": "^15.4.1"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^8.0.1",
+    "chai-as-promised": "^7.1.1"
+  },
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha"
+  },
+  "black": {
+    "lives": "matter"
+  }
+}
