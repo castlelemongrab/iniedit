@@ -1,5 +1,4 @@
 
-let fs = require('fs');
 let Base = require('./base');
 let ini = require('@jedmao/ini-parser');
 
@@ -9,13 +8,17 @@ const Ini = class extends Base {
 
   /**
   */
-  constructor (_options) {
+  constructor (_string, _options) {
 
     super(_options);
 
     this._tree = null;
     this._parser = new ini.default();
     this._parser.configure({ comment: /#/ });
+
+    if (_string != null) {
+      this.parse(_string);
+    }
 
     return this;
   }
@@ -26,6 +29,13 @@ const Ini = class extends Base {
 
     this._tree = this._parser.parse(_string.toString()).items;
     return this;
+  }
+
+  /**
+  */
+  get tree () {
+
+    return this._tree;
   }
 
   /**
@@ -60,8 +70,9 @@ const Ini = class extends Base {
 
   /**
   */
-  delete_section (_name, _where, _comment_where) {
+  transform_section (_sections, _where, _comment_where, _fn) {
 
+    let property_indices = {};
     let where = (_where || {});
     let comment_where = (_comment_where || {});
 
@@ -75,7 +86,7 @@ const Ini = class extends Base {
       let section = this._tree[i];
       let nodes = (section.nodes || []);
 
-      if (section.name != _name) {
+      if (!_sections[section.name]) {
         continue;
       }
 
@@ -86,14 +97,74 @@ const Ini = class extends Base {
         if (node instanceof ini.Comment) {
           if (comment_where[node.text.trim()] != null) { n++; }
         } else if (node instanceof ini.Property) {
-          if (where[node.key] === node.value) { n++; }
+          if (where[node.key] === node.value) {
+            property_indices[node.key] = j; n++;
+          }
         }
       }
 
       if (n == count_needed) {
-        this._tree.splice(i, 1);
+        _fn(i, section, property_indices);
       }
     }
+  }
+
+  /**
+  */
+  delete_section (_sections, _where, _comment_where) {
+
+    return this.transform_section(
+      _sections, _where, _comment_where, (_i) => this.tree.splice(i, 1)
+    );
+  }
+
+  /**
+  */
+  edit_section (_sections, _where, _comment_where, _properties, _comments) {
+
+    let visited = {};
+
+    this.transform_section(
+      _sections, _where, _comment_where, (_i, _section) => {
+
+        let comments = [];
+        let nodes = (_section.nodes || []);
+
+        /* Replace properties */
+        for (let i = 0, len = nodes.length; i < len; ++i) {
+
+          let node = nodes[i];
+
+          if (node instanceof ini.Property) {
+            if (_properties[node.key] != null) {
+              visited[node.key] = true;
+              node.value = _properties[node.key];
+            }
+          }
+        }
+
+        /* Append properties */
+        for (let k in _properties) {
+          if (!visited[k]) {
+            let p = new ini.Property(k);
+            p.delimiter = '='; p.value = _properties[k];
+            _section.nodes.push(p);
+          }
+        }
+
+        /* Build comments */
+        for (let i = 0, len = _comments.length; i < len; ++i) {
+          comments.push(new ini.Comment('#', ` ${_comments[i]}`));
+        }
+
+        /* Append comments */
+        for (let i = 0, len = comments.length; i < len; ++i) {
+          _section.nodes.unshift(comments[i]);
+        }
+      }
+    );
+
+    return this;
   }
 
   /**
