@@ -13,8 +13,9 @@ const Ini = class extends Base {
     super(_options);
 
     this._tree = null;
+    this._comment_char = '#';
     this._parser = new ini.default();
-    this._parser.configure({ comment: /#/ });
+    this._parser.configure({ comment: new RegExp(this._comment_char) });
 
     if (_string != null) {
       this.parse(_string);
@@ -160,7 +161,9 @@ const Ini = class extends Base {
 
         /* Build comments */
         for (let i = 0, len = _comments.length; i < len; ++i) {
-          comments.push(new ini.Comment('#', ` ${_comments[i]}`));
+          comments.push(
+            new ini.Comment(this._comment_char, ` ${_comments[i]}`)
+          );
         }
 
         /* Append comments */
@@ -182,7 +185,9 @@ const Ini = class extends Base {
 
     /* Append comments */
     for (let i = 0, len = _comments.length; i < len; ++i) {
-      section.nodes.push(new ini.Comment('#', ` ${_comments[i]}`));
+      section.nodes.push(new ini.Comment(
+        this._comment_char, ` ${_comments[i]}`
+      ));
     }
 
     /* Append properties */
