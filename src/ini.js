@@ -141,7 +141,7 @@ const Ini = class extends Base {
         let nodes = (_section.nodes || []);
 
         /* Modify properties */
-        for (let i = 0, len = nodes.length; i < len; ++i) {
+        for (let i = 0; i < nodes.length; ++i) {
 
           let node = nodes[i];
 
@@ -159,7 +159,7 @@ const Ini = class extends Base {
 
         /* Append new properties */
         for (let k in properties) {
-          if (visited[k] == null) {
+          if (visited[k] == null && properties[k] !== null) {
             /* Add */
             let p = new ini.Property(k);
             p.delimiter = '='; p.value = properties[k];
