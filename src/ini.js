@@ -73,13 +73,15 @@ const Ini = class extends Base {
   */
   transform_section (_sections, _where, _comment_where, _fn) {
 
-    let property_indices = {};
     let where = (_where || {});
+    let sections = (_sections || {});
     let comment_where = (_comment_where || {});
 
     let count_needed = (
       Object.keys(where).length + Object.keys(comment_where).length
     );
+
+    let property_indices = {};
 
     for (let i = 0; i < this._tree.length; ++i) {
 
@@ -87,7 +89,7 @@ const Ini = class extends Base {
       let section = this._tree[i];
       let nodes = (section.nodes || []);
 
-      if (!_sections[section.name]) {
+      if (Object.keys(sections).length > 0 && !sections[section.name]) {
         continue;
       }
 
@@ -104,7 +106,6 @@ const Ini = class extends Base {
                 : where[node.key] === node.value
           );
           if (should_set) {
-            property_indices[node.key] = j;
             n++;
           }
         }
@@ -129,46 +130,53 @@ const Ini = class extends Base {
   */
   edit_section (_sections, _where, _comment_where, _properties, _comments) {
 
-    let visited = {};
+    let comments = (_comments || {});
+    let properties = (_properties || {});
 
     this.transform_section(
       _sections, _where, _comment_where, (_i, _section) => {
 
-        let comments = [];
+        let visited = {};
+        let new_comments = [];
         let nodes = (_section.nodes || []);
 
-        /* Replace properties */
+        /* Modify properties */
         for (let i = 0, len = nodes.length; i < len; ++i) {
 
           let node = nodes[i];
 
           if (node instanceof ini.Property) {
-            if (_properties[node.key] != null) {
+            if (properties[node.key] != null) {
+              /* Replace */
               visited[node.key] = true;
-              node.value = _properties[node.key];
+              node.value = properties[node.key];
+            } else if (properties[node.key] === null) {
+              /* Delete */
+              nodes.splice(i, 1);
             }
           }
         }
 
-        /* Append properties */
-        for (let k in _properties) {
-          if (!visited[k]) {
+        /* Append new properties */
+        for (let k in properties) {
+          if (visited[k] == null) {
+            /* Add */
             let p = new ini.Property(k);
-            p.delimiter = '='; p.value = _properties[k];
-            _section.nodes.push(p);
+            p.delimiter = '='; p.value = properties[k];
+            nodes.push(p);
           }
         }
 
         /* Build comments */
-        for (let i = 0, len = _comments.length; i < len; ++i) {
-          comments.push(
-            new ini.Comment(this._comment_char, ` ${_comments[i]}`)
+        for (let i = 0, len = comments.length; i < len; ++i) {
+          new_comments.push(
+            new ini.Comment(this._comment_char, ` ${comments[i]}`)
           );
         }
 
-        /* Append comments */
-        for (let i = 0, len = comments.length; i < len; ++i) {
-          _section.nodes.unshift(comments[i]);
+        /* Prepend comments */
+        for (let i = comments.length; i > 0; --i) {
+          _section.nodes.unshift(new_comments[i - 1]);
         }
       }
     );
