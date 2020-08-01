@@ -42,32 +42,39 @@ const Arguments = class extends Base {
         }
       )
       .option(
-        's', {
+        'x', {
           array: true,
           type: 'string',
-          alias: 'section',
-          describe: 'Operate only on a specific section name'
+          alias: 'require-section',
+          describe: 'Only modify this section name matches'
         }
       )
       .option(
-        'p', {
+        'n', {
           array: true,
           type: 'string',
-          alias: 'property',
-          describe: 'Operate only in a section with a specific property'
+          alias: 'require-line',
+          describe: 'Only modify if this key=value line exists'
         }
       )
       .option(
-        'c', {
+        'm', {
           array: true,
           type: 'string',
-          alias: 'comment',
-          describe: 'Operate only in a section with a specific comment'
+          alias: 'require-comment',
+          describe: 'Only modify if this comment exists'
+        }
+      )
+      .option(
+        'r', {
+          type: 'boolean',
+          alias: 'regex',
+          describe: 'Use regular expressions for all matches'
         }
       )
       .command(
         'add', 'Add an entire section to an INI file', {
-          n: {
+          s: {
             type: 'string',
             alias: 'name',
             demandOption: true,
@@ -75,35 +82,40 @@ const Arguments = class extends Base {
           },
           l: {
             array: true,
-            type: 'string',
             alias: 'line',
-            demandOption: true,
-            describe: 'The line to add in key-equals-value format'
-          }
+            type: 'string',
+            describe: 'A key=value line to add, or - for stdin'
+          },
+          c: {
+            array: true,
+            type: 'string',
+            alias: 'comment',
+            describe: 'A comment string to add'
+          },
         }
       )
       .command(
         'delete', 'Delete an entire section of an INI file'
       )
       .command(
-        'add-lines', 'Add some lines to an INI file section', {
+        'modify', 'Modify properties in an INI file section', {
           l: {
             array: true,
-            type: 'string',
             alias: 'line',
-            demandOption: true,
-            describe: 'The line to add in key-equals-value format'
-          }
-        }
-      )
-      .command(
-        'delete-lines', 'Delete some lines from an INI file section', {
-          l: {
+            type: 'string',
+            describe: 'A key=value line to add, or - for stdin'
+          },
+          c: {
             array: true,
             type: 'string',
-            alias: 'line',
-            demandOption: true,
-            describe: 'The property name you wish to remove'
+            alias: 'comment',
+            describe: 'A comment string to add'
+          },
+          d: {
+            array: true,
+            type: 'string',
+            alias: 'delete',
+            describe: 'A property name to delete'
           }
         }
       );

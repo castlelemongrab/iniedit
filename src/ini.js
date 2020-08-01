@@ -7,6 +7,11 @@ let ini = require('@jedmao/ini-parser');
 const Ini = class extends Base {
 
   /**
+    Construct a new INI file parser/serializer. If `_string` is not null
+    or undefined, call the `parse` method automatically upon construction.
+
+    @arg _string {string|Buffer} - Contents of the INI file (optional)
+    @arg _options {Object} - A dictionary of options for the INI parser
   */
   constructor (_string, _options) {
 
@@ -25,6 +30,9 @@ const Ini = class extends Base {
   }
 
   /**
+    Parse an INI file and store its abstract syntax tree (AST) internally.
+    To access the AST, use the `tree` method. This method returns `this`.
+    @arg _string {string|Buffer} - Contents of the INI file (optional)
   */
   parse (_string) {
 
@@ -33,6 +41,8 @@ const Ini = class extends Base {
   }
 
   /**
+    Retrieve the abstract syntax tree (AST) stored in this instance, or
+    null if no INI file has been parsed yet.
   */
   get tree () {
 
@@ -40,6 +50,10 @@ const Ini = class extends Base {
   }
 
   /**
+    Print the contents of the potentially-modified abstract syntax tree
+    (AST) as an INI file using the `emit` function, which defaults to
+    standard output. The `emit` method may be overridden to provide
+    alternative output types/destinations.
   */
   serialize () {
 
@@ -64,12 +78,29 @@ const Ini = class extends Base {
           this._emit_property(node.key, node.value);
         }
       }
-
-      this._emit();
     }
   }
 
   /**
+    Transform the parsed INI file according to a set of rules.
+
+    @arg _sections {Object} - A dictionary of section names to which the
+      transformation should apply. Keys are case-sensitive section names;
+      property/key values are ignored entirely. These are ORed together.
+    @arg _where {Object} - A dictionary of properties which must match in
+      order for the transformation to be applied. Both keys and values are
+      case-sensitive. These are ANDed together; all clauses must match in
+      order for a section to have a transformation applied.
+    @arg _comment_where {Object} - A dictionary of comment text that must
+      be present in order for the transformation to be applied. Keys are
+      case-sensitive trimmed comment text; property/key values are ignored
+      entirely. These are ANDed together; all properties must match in order
+      for the transformation to be applied.
+    @arg _fn {Function} - The transformation function to be applied. The
+      function's prototype is `fn(i, section, indicies)`, where `i` is the
+      section offset in `this.tree`, `section` is the name of the section
+      being transformed, and `indicies` are the zero-based offsets of all
+      properties that were matched by the `_where` clause.
   */
   transform_section (_sections, _where, _comment_where, _fn) {
 
@@ -118,6 +149,9 @@ const Ini = class extends Base {
   }
 
   /**
+    Remove an INI file section that matches the `_sections`, `_where`,
+    and `_comment_where` criteria. For more information on what these
+    mean and how they are structured, see the `transform_section` method.
   */
   delete_section (_sections, _where, _comment_where) {
 
@@ -127,6 +161,17 @@ const Ini = class extends Base {
   }
 
   /**
+    Modify a section of the current INI file that matches the `_sections`,
+    `_where`, and `_comment_where` criteria. For more information on what
+    these mean and how they're structured, consult `transform_section`.
+
+    @arg _properties {Object} - A dictionary of properties to add or replace
+      should the where clause criteria match. If a property value is exactly
+      equal to `null`, the property is removed from the INI file.
+    @arg _comments {Object} - A dictionary of trimmed comments to add or
+      replace should the where clause criteria match. Values are always
+      ignored, unless the value is strictly equal to `null`, in which case
+      the comment is removed from the INI file section.
   */
   edit_section (_sections, _where, _comment_where, _properties, _comments) {
 
@@ -136,8 +181,8 @@ const Ini = class extends Base {
     this.transform_section(
       _sections, _where, _comment_where, (_i, _section) => {
 
-        let visited = {};
         let new_comments = [];
+        let visited_properties = {};
         let nodes = (_section.nodes || []);
 
         /* Modify properties */
@@ -147,11 +192,16 @@ const Ini = class extends Base {
 
           if (node instanceof ini.Property) {
             if (properties[node.key] != null) {
-              /* Replace */
-              visited[node.key] = true;
+              /* Replace property */
+              visited_properties[node.key] = true;
               node.value = properties[node.key];
             } else if (properties[node.key] === null) {
-              /* Delete */
+              /* Delete property */
+              nodes.splice(i, 1);
+            }
+          } else if (node instanceof ini.Comment) {
+            if (comments[node.text.trim()] === null) {
+              /* Delete comment */
               nodes.splice(i, 1);
             }
           }
@@ -159,23 +209,23 @@ const Ini = class extends Base {
 
         /* Append new properties */
         for (let k in properties) {
-          if (visited[k] == null && properties[k] !== null) {
-            /* Add */
+          if (visited_properties[k] == null && properties[k] !== null) {
+            /* Add property */
             let p = new ini.Property(k);
             p.delimiter = '='; p.value = properties[k];
             nodes.push(p);
           }
         }
 
-        /* Build comments */
-        for (let i = 0, len = comments.length; i < len; ++i) {
-          new_comments.push(
-            new ini.Comment(this._comment_char, ` ${comments[i]}`)
-          );
+        /* Build new comments */
+        for (let k in comments) {
+          if (comments[k] !== null) {
+            new_comments.push(new ini.Comment(this._comment_char, ` ${k}`));
+          }
         }
 
-        /* Prepend comments */
-        for (let i = comments.length; i > 0; --i) {
+        /* Prepend new comments */
+        for (let i = new_comments.length; i > 0; --i) {
           _section.nodes.unshift(new_comments[i - 1]);
         }
       }
@@ -185,6 +235,12 @@ const Ini = class extends Base {
   }
 
   /**
+    Add a new section to the parsed INI file.
+
+    @arg _section {String} - The name of the section to add
+    @arg _properties {Object} - A key/value dictionary of section properties
+    @arg _comments {Array} - An array of section comment strings to prepend
+    @arg _should_prepend {boolean} - True if the new section should be first
   */
   add_section (_section, _properties, _comments, _should_prepend) {
 
@@ -215,8 +271,10 @@ const Ini = class extends Base {
   }
 
   /**
+    Emit a string to the output medium of your choice. The default
+    implementation uses `console.log` and writes to standard output.
   */
-  _emit (_str) {
+  emit (_str) {
 
     console.log(_str || '');
     return this;
@@ -226,7 +284,7 @@ const Ini = class extends Base {
   */
   _emit_section (_str) {
 
-    this._emit(`[${_str.replace(/(\[|\])/g, '\\$1')}]`);
+    this.emit(`[${_str.replace(/(\[|\])/g, '\\$1')}]`);
     return this;
   }
 
@@ -234,7 +292,7 @@ const Ini = class extends Base {
   */
   _emit_comment (_str) {
 
-    this._emit(`#${_str}`);
+    this.emit(`#${_str}`);
     return this;
   }
 
@@ -243,7 +301,7 @@ const Ini = class extends Base {
   _emit_property (_key, _value) {
 
     let key = this._escape_equals(_key);
-    this._emit(`${key} = ${_value}`);
+    this.emit(`${key} = ${_value}`);
   }
 
   /**
