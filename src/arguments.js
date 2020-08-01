@@ -42,6 +42,14 @@ const Arguments = class extends Base {
         }
       )
       .option(
+        'f', {
+          type: 'string',
+          alias: 'file',
+          demandOption: true,
+          describe: 'The input file in common INI format'
+        }
+      )
+      .option(
         'x', {
           array: true,
           type: 'string',
@@ -76,7 +84,7 @@ const Arguments = class extends Base {
         'add', 'Add an entire section to an INI file', {
           s: {
             type: 'string',
-            alias: 'name',
+            alias: 'section',
             demandOption: true,
             describe: 'The name of the section to add'
           },

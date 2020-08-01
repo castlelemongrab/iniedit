@@ -173,7 +173,7 @@ const Ini = class extends Base {
       ignored, unless the value is strictly equal to `null`, in which case
       the comment is removed from the INI file section.
   */
-  edit_section (_sections, _where, _comment_where, _properties, _comments) {
+  modify_section (_sections, _where, _comment_where, _properties, _comments) {
 
     let comments = (_comments || {});
     let properties = (_properties || {});
