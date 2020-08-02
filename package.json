@@ -11,6 +11,7 @@
   "dependencies": {
     "@castlelemongrab/strr": "0.0.1",
     "@jedmao/ini-parser": "^0.2.4",
+    "line-reader": "^0.4.0",
     "yargs": "^15.4.1"
   },
   "devDependencies": {

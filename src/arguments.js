@@ -92,7 +92,7 @@ const Arguments = class extends Base {
             array: true,
             alias: 'line',
             type: 'string',
-            describe: 'A key=value line to add, or - for stdin'
+            describe: 'A key=value line to add, or stdin'
           },
           c: {
             array: true,
@@ -111,7 +111,7 @@ const Arguments = class extends Base {
             array: true,
             alias: 'line',
             type: 'string',
-            describe: 'A key=value line to add, or - for stdin'
+            describe: 'A key=value line to add, or stdin'
           },
           c: {
             array: true,
