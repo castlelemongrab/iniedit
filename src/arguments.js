@@ -77,7 +77,7 @@ const Arguments = class extends Base {
         'r', {
           type: 'boolean',
           alias: 'regex',
-          describe: 'Use regular expressions for all matches'
+          describe: 'Interpret non-section matches as expressions'
         }
       )
       .command(

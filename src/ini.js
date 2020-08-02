@@ -84,9 +84,9 @@ const Ini = class extends Base {
   /**
     Transform the parsed INI file according to a set of rules.
 
-    @arg _sections {Object} - A dictionary of section names to which the
-      transformation should apply. Keys are case-sensitive section names;
-      property/key values are ignored entirely. These are ORed together.
+    @arg _sections {Array} - An array of section names to which the
+      transformation should apply. Values are case-sensitive section names
+      and/or regular expressions. These are ORed together; any can match.
     @arg _where {Object} - A dictionary of properties which must match in
       order for the transformation to be applied. Both keys and values are
       case-sensitive. These are ANDed together; all clauses must match in
@@ -104,8 +104,9 @@ const Ini = class extends Base {
   */
   transform_section (_sections, _where, _comment_where, _fn) {
 
+    let rv = 0;
     let where = (_where || {});
-    let sections = (_sections || {});
+    let sections = (_sections || []);
     let comment_where = (_comment_where || {});
 
     let count_needed = (
@@ -116,14 +117,22 @@ const Ini = class extends Base {
 
     for (let i = 0; i < this._tree.length; ++i) {
 
-      let n = 0;
       let section = this._tree[i];
       let nodes = (section.nodes || []);
+      let n = 0, has_section_match = false
 
-      if (Object.keys(sections).length > 0 && !sections[section.name]) {
-        continue;
+      /* Match section */
+      for (let j = 0, ln2 = sections.length; j < ln2; ++j) {
+        if (this._match_generic(sections[i], section.name)) {
+          has_section_match = true;
+        }
       }
 
+      if (!has_section_match) {
+        break;
+      }
+
+      /* Match properties and/or comments */
       for (let j = 0, ln2 = nodes.length; j < ln2; ++j) {
 
         let node = nodes[j];
@@ -131,21 +140,18 @@ const Ini = class extends Base {
         if (node instanceof ini.Comment) {
           if (comment_where[node.text.trim()] != null) { n++; }
         } else if (node instanceof ini.Property) {
-          let should_set = (
-            where[node.key] instanceof RegExp ?
-              !!(where[node[key]],match(node.value))
-                : where[node.key] === node.value
-          );
-          if (should_set) {
+          if (this._match_generic(node.key, node.value)) {
             n++;
           }
         }
       }
 
       if (n == count_needed) {
-        _fn(i, section, property_indices);
+        _fn(i, section, property_indices); ++rv;
       }
     }
+
+    return rv;
   }
 
   /**
@@ -178,7 +184,7 @@ const Ini = class extends Base {
     let comments = (_comments || {});
     let properties = (_properties || {});
 
-    this.transform_section(
+    return this.transform_section(
       _sections, _where, _comment_where, (_i, _section) => {
 
         let new_comments = [];
@@ -230,8 +236,6 @@ const Ini = class extends Base {
         }
       }
     );
-
-    return this;
   }
 
   /**
@@ -278,6 +282,16 @@ const Ini = class extends Base {
 
     console.log(_str || '');
     return this;
+  }
+
+  /**
+  */
+  _match_generic (_lhs, _rhs) {
+
+    return (
+      _lhs instanceof RegExp ?
+        !!_lhs.match(_rhs) : (_lhs === _rhs)
+    );
   }
 
   /**

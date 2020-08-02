@@ -81,15 +81,15 @@ const CLI = class extends Base {
         break;
       case 'delete':
         this._ini.delete_section(
-          this._hash_boolean_array(_args.x),
+          _args.x,
             this._hash_tuple_array(_args.n), this._hash_boolean_array(_args.m)
         );
         break;
       case 'modify':
         this._ini.modify_section(
-          this._hash_boolean_array(_args.x),
-            this._hash_tuple_array(_args.n), this._hash_boolean_array(_args.m),
-            this._hash_tuple_array(_args.l), this._hash_boolean_array(_args.c)
+          _args.x, this._hash_tuple_array(_args.n),
+            this._hash_boolean_array(_args.m), this._hash_tuple_array(_args.l),
+              this._hash_boolean_array(_args.c)
 
         );
         break;
@@ -107,7 +107,7 @@ const CLI = class extends Base {
 
     for (let i = 0, len = array.length; i < len; ++i) {
       let tuple = Strr.split_delimited(array[i], '=', '\\', true, 2);
-
+console.log(tuple);
       if (tuple.length != 2) {
         this._fatal('Malformed key/value input');
       }
