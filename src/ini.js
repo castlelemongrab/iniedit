@@ -87,15 +87,14 @@ const Ini = class extends Base {
     @arg _sections {Array} - An array of section names to which the
       transformation should apply. Values are case-sensitive section names
       and/or regular expressions. These are ORed together; any can match.
-    @arg _where {Object} - A dictionary of properties which must match in
-      order for the transformation to be applied. Both keys and values are
-      case-sensitive. These are ANDed together; all clauses must match in
-      order for a section to have a transformation applied.
-    @arg _comment_where {Object} - A dictionary of comment text that must
-      be present in order for the transformation to be applied. Keys are
-      case-sensitive trimmed comment text; property/key values are ignored
-      entirely. These are ANDed together; all properties must match in order
-      for the transformation to be applied.
+    @arg _where {Array} - An array of two-tuple (key/value pair) properties
+      that must match in order for the the transformation to be applied.
+      Both keys and values are case-sensitive, and may be strings or regular
+      expressions. These matches are ANDed together; all clauses must match
+      in order for a section to have a transformation applied.
+    @arg _comment_where {Array} - An array of comment text to which the
+      transformation should apply. Values are case-sensitive comment text
+      and/or regular expressions. These are ANDed together; all must match.
     @arg _fn {Function} - The transformation function to be applied. The
       function's prototype is `fn(i, section, indicies)`, where `i` is the
       section offset in `this.tree`, `section` is the name of the section
@@ -105,48 +104,43 @@ const Ini = class extends Base {
   transform_section (_sections, _where, _comment_where, _fn) {
 
     let rv = 0;
-    let where = (_where || {});
-    let sections = (_sections || []);
-    let comment_where = (_comment_where || {});
-
-    let count_needed = (
-      Object.keys(where).length + Object.keys(comment_where).length
-    );
-
     let property_indices = {};
 
+    let where = (_where || []);
+    let sections = (_sections || []);
+    let comment_where = (_comment_where || []);
+
+    let matches_required = (where.length + comment_where.length);
+
+    /* For each top-level node */
     for (let i = 0; i < this._tree.length; ++i) {
 
+      let n = 0;
       let section = this._tree[i];
-      let nodes = (section.nodes || []);
-      let n = 0, has_section_match = false
+      let section_nodes = (section.nodes || []);
 
       /* Match section */
-      for (let j = 0, ln2 = sections.length; j < ln2; ++j) {
-        if (this._match_generic(sections[i], section.name)) {
-          has_section_match = true;
-        }
-      }
-
-      if (!has_section_match) {
-        break;
+      if (!this._match_array(sections, section.name)) {
+        continue;
       }
 
       /* Match properties and/or comments */
-      for (let j = 0, ln2 = nodes.length; j < ln2; ++j) {
+      for (let j = 0, ln2 = section_nodes.length; j < ln2; ++j) {
 
-        let node = nodes[j];
+        let node = section_nodes[j];
 
-        if (node instanceof ini.Comment) {
-          if (comment_where[node.text.trim()] != null) { n++; }
-        } else if (node instanceof ini.Property) {
-          if (this._match_generic(node.key, node.value)) {
+        if (node instanceof ini.Property) {
+          if (this._match_pairs_array(where, [ node.key, node.value ])) {
+            n++;
+          }
+        } else if (node instanceof ini.Comment && comment_where.length > 0) {
+          if (this._match_array(comment_where, node.text.trim())) {
             n++;
           }
         }
       }
 
-      if (n == count_needed) {
+      if (n >= matches_required) {
         _fn(i, section, property_indices); ++rv;
       }
     }
@@ -185,11 +179,11 @@ const Ini = class extends Base {
     let properties = (_properties || {});
 
     return this.transform_section(
-      _sections, _where, _comment_where, (_i, _section) => {
+      _sections, _where, _comment_where, (_i, _ini_section) => {
 
         let new_comments = [];
         let visited_properties = {};
-        let nodes = (_section.nodes || []);
+        let nodes = (_ini_section.nodes || []);
 
         /* Modify properties */
         for (let i = 0; i < nodes.length; ++i) {
@@ -232,7 +226,7 @@ const Ini = class extends Base {
 
         /* Prepend new comments */
         for (let i = new_comments.length; i > 0; --i) {
-          _section.nodes.unshift(new_comments[i - 1]);
+          nodes.unshift(new_comments[i - 1]);
         }
       }
     );
@@ -241,37 +235,40 @@ const Ini = class extends Base {
   /**
     Add a new section to the parsed INI file.
 
-    @arg _section {String} - The name of the section to add
+    @arg _name {String} - The name of the section to add
     @arg _properties {Object} - A key/value dictionary of section properties
     @arg _comments {Array} - An array of section comment strings to prepend
     @arg _should_prepend {boolean} - True if the new section should be first
   */
-  add_section (_section, _properties, _comments, _should_prepend) {
+  add_section (_name, _properties, _comments, _should_prepend) {
 
-    let section = new ini.Section();
-    section.name = _section;
+    let comments = (_comments || []);
+    let properties = (_properties || {});
+
+    let ini_section = new ini.Section();
+    ini_section.name = (_name || '');
 
     /* Append comments */
-    for (let i = 0, len = _comments.length; i < len; ++i) {
-      section.nodes.push(new ini.Comment(
-        this._comment_char, ` ${_comments[i]}`
+    for (let i = 0, len = comments.length; i < len; ++i) {
+      ini_section.nodes.push(new ini.Comment(
+        this._comment_char, ` ${comments[i]}`
       ));
     }
 
     /* Append properties */
-    for (let k in _properties) {
+    for (let k in properties) {
       let p = new ini.Property(k);
-      p.delimiter = '='; p.value = _properties[k];
-      section.nodes.push(p);
+      p.delimiter = '='; p.value = properties[k];
+      ini_section.nodes.push(p);
     }
 
     if (_should_prepend) {
-      this.tree.unshift(section);
+      this.tree.unshift(ini_section);
     } else {
-      this.tree.push(section);
+      this.tree.push(ini_section);
     }
 
-    return this;
+    return 1;
   }
 
   /**
@@ -289,9 +286,36 @@ const Ini = class extends Base {
   _match_generic (_lhs, _rhs) {
 
     return (
-      _lhs instanceof RegExp ?
-        !!_lhs.match(_rhs) : (_lhs === _rhs)
+      _lhs instanceof RegExp ?  !!_rhs.match(_lhs) : (_lhs === _rhs)
     );
+  }
+
+  /**
+  */
+  _match_array (_a, _rhs) {
+
+    for (let i = 0, len = _a.length; i < len; ++i) {
+      if (!this._match_generic(_a[i], _rhs)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+  */
+  _match_pairs_array (_pairs, _tuple) {
+
+    for (let i = 0, ln1 = _pairs.length; i < ln1; ++i) {
+      for (let j = 0; j < 2; ++j) {
+        if (_pairs[i][j] != null && !this._match_generic(_pairs[i][j], _tuple[j])) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   /**

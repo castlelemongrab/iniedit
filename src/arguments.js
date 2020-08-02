@@ -62,7 +62,7 @@ const Arguments = class extends Base {
           array: true,
           type: 'string',
           alias: 'require-line',
-          describe: 'Only modify if this key=value line exists'
+          describe: 'Only modify if this line exists'
         }
       )
       .option(
@@ -77,7 +77,7 @@ const Arguments = class extends Base {
         'r', {
           type: 'boolean',
           alias: 'regex',
-          describe: 'Interpret non-section matches as expressions'
+          describe: 'Interpret match criteria as expressions'
         }
       )
       .command(
@@ -92,7 +92,7 @@ const Arguments = class extends Base {
             array: true,
             alias: 'line',
             type: 'string',
-            describe: 'A key=value line to add, or stdin'
+            describe: 'A line to add, or key name to read from stdin'
           },
           c: {
             array: true,
@@ -111,7 +111,7 @@ const Arguments = class extends Base {
             array: true,
             alias: 'line',
             type: 'string',
-            describe: 'A key=value line to add, or stdin'
+            describe: 'A line to add, or key name to read from stdin'
           },
           c: {
             array: true,
