@@ -1,6 +1,7 @@
 
 let Base = require('./base');
 let ini = require('@jedmao/ini-parser');
+let IO = require('@castlelemongrab/ioh');
 
 /**
 **/
@@ -20,6 +21,7 @@ const Ini = class extends Base {
     this._tree = null;
     this._comment_char = '#';
     this._parser = new ini.default();
+    this._io = (this.options.io || new IO.Base());
     this._parser.configure({ comment: new RegExp(this._comment_char) });
 
     if (_string != null) {
@@ -37,6 +39,13 @@ const Ini = class extends Base {
   parse (_string) {
 
     this._tree = this._parser.parse(_string.toString()).items;
+    let n = this.section_count;
+
+    /* Remove trailing newline node */
+    if (n > 0 && this.tree[n - 1].name === '') {
+      this._tree.pop();
+    }
+
     return this;
   }
 
@@ -47,6 +56,16 @@ const Ini = class extends Base {
   get tree () {
 
     return this._tree;
+  }
+
+  /**
+    Return the number of sections in the abstract syntax tree.
+  */
+  get section_count () {
+
+    return (
+      this._tree != null ? this._tree.length : null
+    );
   }
 
   /**
@@ -62,8 +81,12 @@ const Ini = class extends Base {
       let section = this._tree[i];
       let nodes = (section.nodes || []);
 
-      if (!(section instanceof ini.Section) || (section.name == '')) {
+      if (!(section instanceof ini.Section)) {
         continue;
+      }
+
+      if (section.name == '') {
+        this.emit(''); continue;
       }
 
       this._emit_section(section.name);
@@ -110,7 +133,9 @@ const Ini = class extends Base {
     let sections = (_sections || []);
     let comment_where = (_comment_where || []);
 
-    let matches_required = (where.length + comment_where.length);
+    let matches_required = (
+      sections.length + where.length + comment_where.length
+    );
 
     /* For each top-level node */
     for (let i = 0; i < this._tree.length; ++i) {
@@ -120,8 +145,8 @@ const Ini = class extends Base {
       let section_nodes = (section.nodes || []);
 
       /* Match section */
-      if (!this._match_array(sections, section.name)) {
-        continue;
+      if (sections.length > 0 && this._match_array(sections, section.name)) {
+        n++;
       }
 
       /* Match properties and/or comments */
@@ -129,7 +154,7 @@ const Ini = class extends Base {
 
         let node = section_nodes[j];
 
-        if (node instanceof ini.Property) {
+        if (node instanceof ini.Property && where.length > 0) {
           if (this._match_pairs_array(where, [ node.key, node.value ])) {
             n++;
           }
@@ -156,7 +181,7 @@ const Ini = class extends Base {
   delete_section (_sections, _where, _comment_where) {
 
     return this.transform_section(
-      _sections, _where, _comment_where, (_i) => this.tree.splice(_i, 1)
+      _sections, _where, _comment_where, (_i) => this._tree.splice(_i, 1)
     );
   }
 
@@ -257,28 +282,20 @@ const Ini = class extends Base {
 
     /* Append properties */
     for (let k in properties) {
-      let p = new ini.Property(k);
-      p.delimiter = '='; p.value = properties[k];
-      ini_section.nodes.push(p);
+      if (properties[k] !== null) {
+        let p = new ini.Property(k);
+        p.delimiter = '='; p.value = properties[k];
+        ini_section.nodes.push(p);
+      }
     }
 
     if (_should_prepend) {
-      this.tree.unshift(ini_section);
+      this._tree.unshift(ini_section);
     } else {
-      this.tree.push(ini_section);
+      this._tree.push(ini_section);
     }
 
     return 1;
-  }
-
-  /**
-    Emit a string to the output medium of your choice. The default
-    implementation uses `console.log` and writes to standard output.
-  */
-  emit (_str) {
-
-    console.log(_str || '');
-    return this;
   }
 
   /**
@@ -316,6 +333,17 @@ const Ini = class extends Base {
     }
 
     return true;
+  }
+
+  /**
+    Emit a string to the output medium of your choice. The default
+    implementation uses the Javascript console, but you can use the
+    `IOH` class and the `io` constructor option to override this.
+  */
+  emit (_str) {
+
+    this._io.stdout(`${_str}\n`);
+    return this;
   }
 
   /**
