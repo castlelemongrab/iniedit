@@ -9,7 +9,8 @@
     "url": "git+https://github.com/castlelemongrab/iniedit.git"
   },
   "dependencies": {
-    "@castlelemongrab/ioh": "^0.0.3",
+    "@castlelemongrab/ioh": "^0.0.4",
+    "@castlelemongrab/oath": "^0.0.2",
     "@castlelemongrab/strr": "^0.0.1",
     "@jedmao/ini-parser": "^0.2.4",
     "line-reader": "^0.4.0",
@@ -19,10 +20,12 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "chai-js-factories": "^0.1.5",
-    "mocha": "^8.0.1"
+    "mocha": "^8.0.1",
+    "uuid": "^8.3.0"
   },
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha"
+    "clean": "rm -f ./test/temp/*.ini",
+    "test": "./node_modules/mocha/bin/mocha test/unit test/integration"
   },
   "black": {
     "lives": "matter"

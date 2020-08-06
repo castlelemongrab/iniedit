@@ -100,6 +100,11 @@ const Arguments = class extends Base {
             alias: 'comment',
             describe: 'A comment string to add'
           },
+          t: {
+            type: 'boolean',
+            alias: 'top',
+            describe: 'Add the new section to the top of the file'
+          }
         }
       )
       .command(

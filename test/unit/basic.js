@@ -2,8 +2,8 @@
 'use strict';
 
 const chai = require('chai');
-const Ini = require('../src/ini');
-const util = require('./include/util');
+const Ini = require('../../src/ini');
+const util = require('../include/util');
 const IO = require('@castlelemongrab/ioh');
 const promises = require('chai-as-promised');
 const factories = require('chai-js-factories');
@@ -31,15 +31,7 @@ describe('basic', () => {
 
   it('should be able to add INI sections', () => {
 
-    let i = chai.factory.create(
-      'fixture', { type: 'input', name: 'add-001' }
-    );
-    let o = chai.factory.create(
-      'fixture', { type: 'output', name: 'add-001' }
-    );
-
-    let io = new IO.NodePlug();
-    let ini = new Ini(i, { io: io });
+    let [ ini, io, o, i ] = util.init_fixture_test(chai, 'add-001');
 
     ini.add_section('Top', { A: 1, B: 'string' }, [], true);
     ini.add_section('Bottom', { A: null, B: 2 }, [ '#=comment#=' ]);
@@ -51,15 +43,7 @@ describe('basic', () => {
 
   it('should be able to delete INI sections', () => {
 
-    let i = chai.factory.create(
-      'fixture', { type: 'input', name: 'delete-001' }
-    );
-    let o = chai.factory.create(
-      'fixture', { type: 'output', name: 'delete-001' }
-    );
-
-    let io = new IO.NodePlug();
-    let ini = new Ini(i, { io: io });
+    let [ ini, io, o, i ] = util.init_fixture_test(chai, 'delete-001');
 
     ini.delete_section([ 'B' ]);
     ini.delete_section([], [], [ 'remove' ]);
@@ -74,15 +58,7 @@ describe('basic', () => {
 
   it('should be able to modify INI sections', () => {
 
-    let i = chai.factory.create(
-      'fixture', { type: 'input', name: 'modify-001' }
-    );
-    let o = chai.factory.create(
-      'fixture', { type: 'output', name: 'modify-001' }
-    );
-
-    let io = new IO.NodePlug();
-    let ini = new Ini(i, { io: io });
+    let [ ini, io, o, i ] = util.init_fixture_test(chai, 'modify-001');
 
     ini.modify_section(
       [ 'A' ], [[ 'A', 'B' ]], [],
