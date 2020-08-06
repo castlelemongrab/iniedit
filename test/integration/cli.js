@@ -71,7 +71,7 @@ describe('cli', () => {
     ]);
 
     await iniedit(file, [
-      'add', '-s', 'Bottom', '-d', 'A=', '-l', 'B= 2', '-c', '#=comment#='
+      'add', '-s', 'Bottom', '-l', 'B= 2', '-c', '#=comment#='
     ]);
 
     await iniedit(file, [
@@ -81,5 +81,6 @@ describe('cli', () => {
     await iniedit_final(file, out_file);
     return await unlink(file);
   });
+
 });
 
