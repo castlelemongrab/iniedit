@@ -71,7 +71,7 @@ describe('cli', () => {
     ]);
 
     await iniedit(file, [
-      'add', '-s', 'Bottom', '-l', 'B= 2', '-c', '#=comment#='
+      'add', '-r', '-s', 'Bottom', '-l', 'B= 2', '-c', '#=comment#='
     ]);
 
     await iniedit(file, [
@@ -81,6 +81,36 @@ describe('cli', () => {
     await iniedit_final(file, out_file);
     return await unlink(file);
   });
+
+  it('should be able to delete INI sections', async () => {
+
+    let out_file = path.join(fixtures_out, 'delete-001.ini');
+    let file = await iniedit_init(path.join(fixtures_in, 'delete-001.ini'));
+
+    await iniedit(file, [
+      'delete', '-x', 'B'
+    ]);
+
+    await iniedit(file, [
+      'delete', '-m', 'remove'
+    ]);
+
+    await iniedit(file, [
+      'delete', '-n', 'Foo = Remove'
+    ]);
+
+    await iniedit(file, [
+      'delete', '-r', '-x', 'Dele?t?e?$', '-m', 'regexp propert(y|(ies+))'
+    ]);
+
+    await iniedit(file, [
+      'delete', '-r', '-x', 'D', '-n', 'Baz=N?o?Remo+ve'
+    ]);
+
+    await iniedit_final(file, out_file);
+    return await unlink(file);
+  });
+
 
 });
 

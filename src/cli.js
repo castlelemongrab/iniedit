@@ -85,7 +85,7 @@ const CLI = class extends Base {
       case 'delete':
         this._ini.delete_section(
           _args.x, await this._create_tuple_array(_args.n, _args.r),
-            await this._create_tuple_array(_args.m, _args.r)
+            await this._create_tuple_array(_args.m, _args.r, true)
         );
         break;
       case 'modify':
@@ -138,14 +138,17 @@ const CLI = class extends Base {
 
   /**
    */
-  async _create_tuple_hash (_array, _is_regexp) {
+  async _create_tuple_hash (_array, _is_regexp, _no_stdin) {
 
     let rv = {};
     let array = (_array || []);
 
     for (let i = 0, len = array.length; i < len; ++i) {
 
-      let tuple = await this._split_or_read_line(array[i]);
+      let tuple = (
+        _no_stdin ? array[i] :
+          await this._split_or_read_line(array[i])
+      );
 
       let k = this._create_regexp_if(tuple[0], false);
       rv[k] = this._create_regexp_if(tuple[1], _is_regexp);
@@ -156,14 +159,17 @@ const CLI = class extends Base {
 
   /**
    */
-  async _create_tuple_array (_array, _is_regexp) {
+  async _create_tuple_array (_array, _is_regexp, _no_stdin) {
 
     let rv = [];
     let array = (_array || []);
 
     for (let i = 0, len = array.length; i < len; ++i) {
 
-      let tuple = await this._split_or_read_line(array[i]);
+      let tuple = (
+        _no_stdin ? array[i] :
+          await this._split_or_read_line(array[i])
+      );
 
       rv.push([
         this._create_regexp_if(tuple[0], _is_regexp),
