@@ -133,20 +133,18 @@ const Ini = class extends Base {
     let sections = (_sections || []);
     let comment_where = (_comment_where || []);
 
-    let matches_required = (
-      sections.length + where.length + comment_where.length
-    );
+    let matches_required = (where.length + comment_where.length);
 
     /* For each top-level node */
     for (let i = 0; i < this._tree.length; ++i) {
 
-      let n = 0;
+      let n = 0, m = 0;
       let section = this._tree[i];
       let section_nodes = (section.nodes || []);
 
       /* Match section */
-      if (sections.length > 0 && this._match_array(sections, section.name)) {
-        n++;
+      if (sections.length > 0 && !this._match_array(sections, section.name)) {
+        continue;
       }
 
       /* Match properties and/or comments */
@@ -158,9 +156,9 @@ const Ini = class extends Base {
           if (this._match_pairs_array(where, [ node.key, node.value ])) {
             n++;
           }
-        } else if (node instanceof ini.Comment && comment_where.length > 0) {
-          if (this._match_array(comment_where, node.text.trim())) {
-            n++;
+        } else if (m = node instanceof ini.Comment && comment_where.length) {
+          if (m = this._match_array(comment_where, node.text.trim())) {
+            n += m;
           }
         }
       }
@@ -197,8 +195,11 @@ const Ini = class extends Base {
       replace should the where clause criteria match. Values are always
       ignored, unless the value is strictly equal to `null`, in which case
       the comment is removed from the INI file section.
+    @arg _name {String} - Optional. If `_name` is not null or undefined,
+      replace the matched section's name with `_name`.
   */
-  modify_section (_sections, _where, _comment_where, _properties, _comments) {
+  modify_section (_sections, _where,
+                  _comment_where, _properties, _comments, _name) {
 
     let comments = (_comments || {});
     let properties = (_properties || {});
@@ -210,8 +211,13 @@ const Ini = class extends Base {
         let visited_properties = {};
         let nodes = (_ini_section.nodes || []);
 
+        /* Modify section name */
+        if (_name != null) {
+          _ini_section.name = _name;
+        }
+
         /* Modify properties */
-        for (let i = 0; i < nodes.length; ++i) {
+        for (let i = 0, len = nodes.length; i < len; ++i) {
 
           let node = nodes[i];
 
@@ -222,12 +228,12 @@ const Ini = class extends Base {
               node.value = properties[node.key];
             } else if (properties[node.key] === null) {
               /* Delete property */
-              nodes.splice(i, 1);
+              nodes.splice(i, 1); --i;
             }
           } else if (node instanceof ini.Comment) {
             if (comments[node.text.trim()] === null) {
               /* Delete comment */
-              nodes.splice(i, 1);
+              nodes.splice(i, 1); --i;
             }
           }
         }
@@ -302,37 +308,59 @@ const Ini = class extends Base {
   */
   _match_generic (_lhs, _rhs) {
 
-    return (
-      _lhs instanceof RegExp ?  !!_rhs.match(_lhs) : (_lhs === _rhs)
-    );
+    if (_lhs instanceof RegExp && _rhs instanceof RegExp) {
+      return false;
+    }
+
+    if (_lhs instanceof RegExp) {
+      return !!_rhs.toString().match(_lhs);
+    }
+
+    if (_rhs instanceof RegExp) {
+      return !!_lhs.toString().match(_rhs);
+    }
+
+    return (_lhs.toString() === _rhs.toString());
   }
 
   /**
   */
   _match_array (_a, _rhs) {
 
+    let n = 0;
+
     for (let i = 0, len = _a.length; i < len; ++i) {
       if (!this._match_generic(_a[i], _rhs)) {
-        return false;
+        return n;
       }
+
+      n++;
     }
 
-    return true;
+    return n;
   }
 
   /**
   */
   _match_pairs_array (_pairs, _tuple) {
 
+    let n = 0;
+
     for (let i = 0, ln1 = _pairs.length; i < ln1; ++i) {
       for (let j = 0; j < 2; ++j) {
-        if (_pairs[i][j] != null && !this._match_generic(_pairs[i][j], _tuple[j])) {
-          return false;
+
+        let is_match = (
+          _pairs[i][j] == null ||
+            this._match_generic(_pairs[i][j], _tuple[j])
+        );
+
+        if (is_match) {
+          n++;
         }
       }
     }
 
-    return true;
+    return n;
   }
 
   /**
