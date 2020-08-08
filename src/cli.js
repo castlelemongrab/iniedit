@@ -96,7 +96,8 @@ const CLI = class extends Base {
     switch (_args._[0]) {
       case 'add':
         this._ini.add_section(
-          _args.s, await this._create_tuple_hash(_args.l), _args.c, _args.t
+          _args.s, await this._create_tuple_hash(_args.l), _args.c, _args.t,
+            _args.x, await this._create_tuple_array(_args.n, _args.r), _args.m
         );
         break;
       case 'delete':

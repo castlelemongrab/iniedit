@@ -67,15 +67,44 @@ describe('cli', () => {
     let file = await iniedit_init(path.join(fixtures_in, 'add-001.ini'));
 
     await iniedit(file, [
-      'add', '-t', '-s', 'Top', '-l', 'A=1', '-l', 'B =string'
+      'add',
+        '-t', '-s', 'Top', '-l', 'A=1', '-l', 'B =string'
     ]);
 
     await iniedit(file, [
-      'add', '-r', '-s', 'Bottom', '-l', 'B= 2', '-c', '#=comment#='
+      'add', '-r',
+        '-s', 'Bottom', '-l', 'B= 2', '-c', '#=comment#='
     ]);
 
     await iniedit(file, [
-      'add', '-t', '-s', 'Escape', '-l', 'Value = =Equals='
+      'add', '-r',
+        '-x', 'Bottom', '-n', ' B=2 ', '-m', '#=com+ent#=',
+        '-s', 'Rematch', '-l', 'A=1'
+    ]);
+
+    await iniedit(file, [
+      'add', '-t',
+        '-s', 'Escape', '-l', 'Value = =Equals='
+    ]);
+
+    await iniedit(file, [
+      'add', '-x', 'Void', '-l', 'Value=0',
+        '-s', 'Void'
+    ]);
+
+    await iniedit(file, [
+      'add', '-x', 'Void', '-l', 'Value=1',
+        '-s', 'Void', '-n', 'Void=1'
+    ]);
+
+    await iniedit(file, [
+      'add', '-x', 'Void', '-l', 'Value=2',
+        '-s', 'Void', '-m', 'Void'
+    ]);
+
+    await iniedit(file, [
+      'add', '-x', 'Void', '-l', 'Value=3',
+        '-s', 'Void', '-n', 'Void=1', '-m', 'Void'
     ]);
 
     await iniedit_final(file, expect_file);
@@ -118,7 +147,7 @@ describe('cli', () => {
     ]);
 
     await iniedit(file, [
-      'delete', '-r', '-x', 'Dele?t?e?$', '-m', 'regexp propert(y|(ies+))'
+      'delete', '-r', '-n', 'Dele?t?e?$=.*', '-m', 'regexp propert(y|(ies+))'
     ]);
 
     await iniedit(file, [

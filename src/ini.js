@@ -153,8 +153,8 @@ const Ini = class extends Base {
         let node = section_nodes[j];
 
         if (node instanceof ini.Property && where.length > 0) {
-          if (this._match_pairs_array(where, [ node.key, node.value ])) {
-            n++;
+          if (m = this._match_pairs_array(where, [ node.key, node.value ])) {
+            if (m === 2) { n++; }
           }
         } else if (m = node instanceof ini.Comment && comment_where.length) {
           if (m = this._match_array(comment_where, node.text.trim())) {
@@ -163,8 +163,18 @@ const Ini = class extends Base {
         }
       }
 
+      /* Fully-empty criteria does not match */
+
+      /* Check if clause is satisfied */
       if (n >= matches_required) {
-        _fn(i, section, property_indices); ++rv;
+
+        /* Increment section match count */
+        rv++;
+
+        /* Perform transform; break on false return value*/
+        if (!_fn(i, section, property_indices)) {
+          break;
+        }
       }
     }
 
@@ -179,7 +189,7 @@ const Ini = class extends Base {
   delete_section (_sections, _where, _comment_where) {
 
     return this.transform_section(
-      _sections, _where, _comment_where, (_i) => this._tree.splice(_i, 1)
+      _sections, _where, _comment_where, (_i) => !!this._tree.splice(_i, 1)
     );
   }
 
@@ -259,6 +269,8 @@ const Ini = class extends Base {
         for (let i = new_comments.length; i > 0; --i) {
           nodes.unshift(new_comments[i - 1]);
         }
+
+        return true;
       }
     );
   }
@@ -271,10 +283,20 @@ const Ini = class extends Base {
     @arg _comments {Array} - An array of section comment strings to prepend
     @arg _should_prepend {boolean} - True if the new section should be first
   */
-  add_section (_name, _properties, _comments, _should_prepend) {
+  add_section (_name, _properties, _comments,
+               _should_prepend, _sections, _where, _comment_where) {
 
     let comments = (_comments || []);
     let properties = (_properties || {});
+
+    /* Perform optional match predicate */
+    let n = this.transform_section(
+      _sections, _where, _comment_where, () => false
+    );
+
+    if (n <= 0) {
+      return 0;
+    }
 
     let ini_section = new ini.Section();
     ini_section.name = (_name || '');
@@ -345,7 +367,7 @@ const Ini = class extends Base {
     let n = 0;
 
     for (let i = 0, ln1 = _pairs.length; i < ln1; ++i) {
-      for (let j = 0; j < 2; ++j) {
+      for (let j = 0; j < _tuple.length; ++j) {
 
         let is_match = (
           _pairs[i][j] == null ||

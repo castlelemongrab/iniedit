@@ -33,9 +33,31 @@ describe('basic', () => {
 
     let [ ini, io, o, i ] = util.init_fixture_test(chai, 'add-001');
 
-    ini.add_section('Top', { A: 1, B: 'string' }, [], true);
     ini.add_section('Bottom', { A: null, B: 2 }, [ '#=comment#=' ]);
-    ini.add_section('Escape', { Value: '=Equals=' }, [], true);
+
+    ini.add_section(
+      'Rematch', { A: 1 }, [], false,
+        [ 'Bottom' ], [[ 'B', '2' ]], [ /#=com+ent#=/ ]
+    );
+
+    ini.add_section('Top', { A: 1, B: 'string' }, [], true);
+    ini.add_section('Escape', { Value: '=Equals=' }, [], true, [], [], []);
+
+    ini.add_section(
+      'Void', { Value: 0 }, [], true, [ 'Void' ], [], []
+    );
+
+    ini.add_section(
+      'Void', { Value: 1 }, [], true, [], [[ 'Void', 1 ]], []
+    );
+
+    ini.add_section(
+      'Void', { Value: 2 }, [], true, [], [], [ 'Void' ]
+    );
+
+    ini.add_section(
+      'Void', { Value: 3 }, [], true, [ 'Void' ], [[ 'Void', 1 ]], [ 'Void' ]
+    );
 
     ini.serialize();
     expect(io.toString()).to.equal(o);
@@ -52,7 +74,7 @@ describe('basic', () => {
     ini.delete_section([ 'Z', /ZZ+$/ ], [[ 'A', /st?r?/ ]], [ /^C+.*C?$/ ]);
     ini.delete_section([], [], [ 'remove' ]);
     ini.delete_section([], [['Foo', 'Remove' ]]);
-    ini.delete_section([], [[/^Dele?t?e?$/ ]], [ /^regexp propert(y|(ies+))/ ]);
+    ini.delete_section([], [[ /^Dele?t?e?$/, /.*/ ]], [ /^regexp propert(y|(ies+))/ ]);
     ini.delete_section([ 'D' ], [['Baz', /N?o?Remo+ve/ ]]);
 
     ini.serialize();
@@ -80,7 +102,7 @@ describe('basic', () => {
     );
 
     ini.modify_section(
-      [], [[ /A{1,3}/, 'X' ], [ 'C', 'Y' ], [ 'E', 'ZZ*' ]], [ /^Add/ ],
+      [], [[ /A{1,3}/, 'X' ], [ 'C', 'Y' ], [ 'E', /ZZ*/ ]], [ /^Add/ ],
         { A: null, Added: 1 }, { Modified: true }
     );
 
