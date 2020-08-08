@@ -127,8 +127,19 @@ const Arguments = class extends Base {
           d: {
             array: true,
             type: 'string',
-            alias: 'delete',
-            describe: 'A property name to delete'
+            alias: 'delete-line',
+            describe: 'A line name to delete'
+          },
+          o: {
+            array: true,
+            type: 'string',
+            alias: 'delete-comment',
+            describe: 'A comment string to delete'
+          },
+          e: {
+            type: 'string',
+            alias: 'section',
+            description: 'A replacement section name'
           }
         }
       );

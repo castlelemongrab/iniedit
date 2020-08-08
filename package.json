@@ -25,7 +25,7 @@
   },
   "scripts": {
     "clean": "rm -f ./test/temp/*.ini",
-    "test": "./node_modules/mocha/bin/mocha test/unit test/integration"
+    "test": "./node_modules/mocha/bin/mocha -t 5000 test/unit test/integration"
   },
   "black": {
     "lives": "matter"

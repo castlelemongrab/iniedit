@@ -28,7 +28,7 @@ describe('cli', () => {
   let fixtures_in = path.join(__dirname, '..', 'fixtures', 'input');
   let fixtures_out = path.join(__dirname, '..', 'fixtures', 'output');
   let iniedit_path = path.join(__dirname, '..', '..', 'bin', 'iniedit');
-  
+
   /**
   **/
   const iniedit_init = async (_file) => {
@@ -128,5 +128,62 @@ describe('cli', () => {
     await iniedit_final(file, expect_file);
     return await unlink(file);
   });
+
+  it('should be able to modify INI sections', async () => {
+
+    let expect_file = path.join(fixtures_out, 'modify-001.ini');
+    let file = await iniedit_init(path.join(fixtures_in, 'modify-001.ini'));
+
+    await iniedit(file, [
+      'modify',
+        '-x', 'A', '-n', ' A = B ',
+        '-l', ' C= D '
+    ]);
+
+    await iniedit(file, [
+      'modify',
+        '-x', 'B', '-m', 'Comment',
+        '-d', 'A', '-o', 'Comment', '-l', 'C=2'
+    ]);
+
+    await iniedit(file, [
+      'modify', '-r', '-n', 'Unique=D', '-n', 'E=F',
+        '-d', 'Unique', '-l', 'A=1', '-l', 'E=3 ', '-c', 'Comment'
+    ]);
+
+    await iniedit(file, [
+      'modify', '-r',
+        '-n', 'A{1,3}=X', '-n', 'C=Y', '-n', 'E=ZZ*', '-m', '^Add',
+        '-d', 'A', '-l', 'Added=1', '-c', 'Modified'
+    ]);
+
+    await iniedit(file, [
+      'modify', '-r',
+        '-x', 'E{1,2}', '-n', 'A+B*=\\w', '-m', '^E+',
+        '-l', 'C=1', '-o', 'EE', '-c', 'E'
+    ]);
+
+    await iniedit(file, [
+      'modify',
+        '-x', 'Multiple',
+        '-d', 'A', '-d', 'C'
+    ]);
+
+    await iniedit(file, [
+      'modify', '-r',
+        '-n', 'Multi.*=Multi.*',
+        '-l', 'A =A', '-l', 'Multiple=1', '-l', 'X=XX',
+        '-d', 'Multi', '-e', 'X'
+    ]);
+
+    await iniedit(file, [
+      'modify',
+        '-x', 'Rename', '-e', 'Renamed Section'
+    ]);
+
+    await iniedit_final(file, expect_file);
+    return await unlink(file);
+  });
+
 });
 

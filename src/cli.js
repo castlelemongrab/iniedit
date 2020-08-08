@@ -56,18 +56,26 @@ const CLI = class extends Base {
    */
   _validate_args (_args) {
 
+    let is_valid = true;
+
     switch (_args._[0]) {
       case 'delete':
-        if (_args.x == null && _args.n == null && _args.m == null) {
-          this._fatal('No modification criteria specified');
-        }
+        is_valid = (
+          _args.x != null || _args.n != null || _args.m != null
+        );
         break;
       case 'modify':
-        if (_args.l == null && _args.c == null && _args.d == null) {
-          this._fatal('No modification operations specified');
-        }
+        is_valid = (
+          _args.l != null || _args.c != null ||
+            _args.d != null || _args.o != null || _args.e != null
+        );
+        break;
       default:
         break;
+    }
+
+    if (!is_valid) {
+      this._fatal('No modification operations specified');
     }
 
     return this;
@@ -99,10 +107,15 @@ const CLI = class extends Base {
       case 'modify':
         this._ini.modify_section(
           _args.x,
-            await this._create_tuple_array(_args.n, _args.r),
-            await this._create_tuple_array(_args.m, _args.r),
-            await this._create_tuple_hash(_args.l),
-            this._create_boolean_hash(_args.c)
+          await this._create_tuple_array(_args.n, _args.r),
+          _args.m,
+          this._add_hash_nulls(
+            await this._create_tuple_hash(_args.l), _args.d
+          ),
+          this._add_hash_nulls(
+            this._create_boolean_hash(_args.c), _args.o
+          ),
+          _args.e
         );
         break;
     }
@@ -114,13 +127,8 @@ const CLI = class extends Base {
    */
   _convert_regexp_args (_args) {
 
-    if (_args.x) {
-      _args.x = this._create_regexp_array_if(_args.x, _args.r);
-    }
-
-    if (_args.m) {
-      _args.m = this._create_regexp_array_if(_args.m, _args.r);
-    }
+    _args.x = this._create_regexp_array_if(_args.x, _args.r);
+    _args.m = this._create_regexp_array_if(_args.m, _args.r);
 
     return _args;
   }
@@ -225,8 +233,29 @@ const CLI = class extends Base {
 
     let rv = _a;
 
+    if (rv == null) {
+      return rv;
+    }
+
     for (let i = 0, len = rv.length; i < len; ++i) {
       rv[i] = this._create_regexp_if(rv[i], _is_regexp, _regexp_flags);
+    }
+
+    return rv;
+  }
+
+  /**
+   */
+  _add_hash_nulls (_hash, _key_array) {
+
+    let rv = _hash;
+
+    if (_key_array == null) {
+      return rv;
+    }
+
+    for (let i = 0, len = _key_array.length; i < len; ++i) {
+      rv[_key_array[i]] = null;
     }
 
     return rv;

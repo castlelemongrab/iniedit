@@ -75,17 +75,17 @@ describe('basic', () => {
     );
 
     ini.modify_section(
-      [], [[ 'Unique', /D/ ], [ 'E', 'F' ]],
-        [], { A: 1, E: 3, Unique: null }, { Comment: true }
+      [], [[ 'Unique', /D/ ], [ 'E', 'F' ]], [],
+        { A: 1, E: 3, Unique: null }, { Comment: true }
     );
 
     ini.modify_section(
-      [], [[ /A+/, 'X' ], [ 'C', 'Y' ], [ 'E', 'ZZ*' ]], [ 'Add' ],
+      [], [[ /A{1,3}/, 'X' ], [ 'C', 'Y' ], [ 'E', 'ZZ*' ]], [ /^Add/ ],
         { A: null, Added: 1 }, { Modified: true }
     );
 
     ini.modify_section(
-      [ /E/ ], [[ /A+B*/, /\w/ ]], [ /E+/ ],
+      [ /E{1,2}/ ], [[ /A+B*/, /\w/ ]], [ /E+/ ],
         { C: 1 }, { EE: null, E: 1 }
     );
 
@@ -96,7 +96,7 @@ describe('basic', () => {
 
     ini.modify_section(
       [], [[ /Multi.*/, /Multi.*/ ]], [],
-        { A: 'Modified', Multi: null, Multiple: 'Multiple', X: 'X' }, {}, 'X'
+        { A: 'A', X: 'XX', Multiple: 1, Multi: null }, {}, 'X'
     );
 
     ini.modify_section(
