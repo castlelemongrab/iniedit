@@ -330,11 +330,9 @@ const Ini = class extends Base {
     let n = 0;
 
     for (let i = 0, len = _a.length; i < len; ++i) {
-      if (!this._match_generic(_a[i], _rhs)) {
-        return n;
+      if (this._match_generic(_a[i], _rhs)) {
+        n++;
       }
-
-      n++;
     }
 
     return n;

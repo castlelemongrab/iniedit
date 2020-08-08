@@ -63,7 +63,7 @@ describe('cli', () => {
 
   it('should be able to add INI sections', async () => {
 
-    let out_file = path.join(fixtures_out, 'add-001.ini');
+    let expect_file = path.join(fixtures_out, 'add-001.ini');
     let file = await iniedit_init(path.join(fixtures_in, 'add-001.ini'));
 
     await iniedit(file, [
@@ -78,17 +78,35 @@ describe('cli', () => {
       'add', '-t', '-s', 'Escape', '-l', 'Value = =Equals='
     ]);
 
-    await iniedit_final(file, out_file);
+    await iniedit_final(file, expect_file);
     return await unlink(file);
   });
 
   it('should be able to delete INI sections', async () => {
 
-    let out_file = path.join(fixtures_out, 'delete-001.ini');
+    let expect_file = path.join(fixtures_out, 'delete-001.ini');
     let file = await iniedit_init(path.join(fixtures_in, 'delete-001.ini'));
 
     await iniedit(file, [
       'delete', '-x', 'B'
+    ]);
+
+    await iniedit(file, [
+      'delete', '-x', 'W', '-x', 'WW'
+    ]);
+
+    await iniedit(file, [
+      'delete', '-x', 'X', '-x', 'XX',
+        '-n', 'A =1', '-n', ' B= 2 '
+    ]);
+
+    await iniedit(file, [
+      'delete', '-r', '-x', '^Y', '-x', '^YY', '-x', '^YY+'
+    ]);
+
+    await iniedit(file, [
+      'delete', '-r', '-x', '^Z', '-x', '^ZZ$', '-x', 'ZZ+$',
+        '-n', 'A=st?r?', '-m', '^C+'
     ]);
 
     await iniedit(file, [
@@ -107,10 +125,8 @@ describe('cli', () => {
       'delete', '-r', '-x', 'D', '-n', 'Baz=N?o?Remo+ve'
     ]);
 
-    await iniedit_final(file, out_file);
+    await iniedit_final(file, expect_file);
     return await unlink(file);
   });
-
-
 });
 

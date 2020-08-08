@@ -46,6 +46,10 @@ describe('basic', () => {
     let [ ini, io, o, i ] = util.init_fixture_test(chai, 'delete-001');
 
     ini.delete_section([ 'B' ]);
+    ini.delete_section([ 'W', 'WW' ]);
+    ini.delete_section([ 'X', 'XX' ], [[ 'A', 1 ], [ 'B', 2 ]]);
+    ini.delete_section([ 'Y', 'YY', /YY+/ ]);
+    ini.delete_section([ 'Z', /ZZ+$/ ], [[ 'A', /st?r?/ ]], [ /^C+.*C?$/ ]);
     ini.delete_section([], [], [ 'remove' ]);
     ini.delete_section([], [['Foo', 'Remove' ]]);
     ini.delete_section([], [[/^Dele?t?e?$/ ]], [ /^regexp propert(y|(ies+))/ ]);
@@ -99,6 +103,7 @@ describe('basic', () => {
       [ 'Rename' ], [], [],
         {}, {}, 'Renamed Section'
     );
+
 
     ini.serialize();
     expect(io.toString()).to.equal(o);

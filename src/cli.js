@@ -4,9 +4,11 @@
 
 const Ini = require('./ini');
 const Base = require('./base');
-const Oath = require('./oath');
+const process = require('process');
 const Arguments = require('./arguments');
+const IO = require('@castlelemongrab/ioh');
 const Strr = require('@castlelemongrab/strr');
+const Oath = require('@castlelemongrab/oath');
 
 /**
   The command-line interface to Parlance.
@@ -20,14 +22,13 @@ const CLI = class extends Base {
 
     super(_options);
 
-    /* Probably not the best idea */
-    this._fs = require('fs');
-    this._process = require('process');
+    this._ini = new Ini();
+    this._args = new Arguments();
+    this._io = (this.options.io || new IO.Node());
     this._line_factory = Oath.promisify(require('line-reader').open);
 
     this._lines = null;
-    this._ini = new Ini();
-    this._args = new Arguments();
+    this._next_line = null;
 
     return this;
   }
@@ -40,7 +41,7 @@ const CLI = class extends Base {
     this._validate_args(args);
 
     try {
-      this._ini.parse(this._fs.readFileSync(args.f));
+      this._ini.parse(await this._io.read_file(args.f));
     } catch (_e) {
       this._fatal(`Unable to parse file '${args.f}`, _e);
     }
@@ -76,6 +77,14 @@ const CLI = class extends Base {
    */
   async _run_command (_args) {
 
+    /* Regexp support */
+    try {
+      _args = this._convert_regexp_args(_args);
+    } catch (_e) {
+      this._io.fatal(_e.message);
+    }
+
+    /* Translate to API */
     switch (_args._[0]) {
       case 'add':
         this._ini.add_section(
@@ -84,8 +93,7 @@ const CLI = class extends Base {
         break;
       case 'delete':
         this._ini.delete_section(
-          _args.x, await this._create_tuple_array(_args.n, _args.r),
-            await this._create_tuple_array(_args.m, _args.r, true)
+          _args.x, await this._create_tuple_array(_args.n, _args.r), _args.m
         );
         break;
       case 'modify':
@@ -104,6 +112,21 @@ const CLI = class extends Base {
 
   /**
    */
+  _convert_regexp_args (_args) {
+
+    if (_args.x) {
+      _args.x = this._create_regexp_array_if(_args.x, _args.r);
+    }
+
+    if (_args.m) {
+      _args.m = this._create_regexp_array_if(_args.m, _args.r);
+    }
+
+    return _args;
+  }
+
+  /**
+   */
   async _split_or_read_line (_str) {
 
     let tuple = Strr.split_delimited(_str, '=', '\\', true, 2);
@@ -113,8 +136,7 @@ const CLI = class extends Base {
       if (!this._lines.hasNextLine()) {
         throw Error('Unexpected end of input');
       }
-      let next_line = Oath.promisify(this._lines.nextLine);
-      tuple.push(await next_line());
+      tuple.push(await this._next_line());
     } else if (tuple.length != 2) {
       throw new Error('Malformed key/value input');
     }
@@ -187,7 +209,24 @@ const CLI = class extends Base {
     let rv = _str.toString();
 
     if (_is_regexp) {
-      rv = new RegExp(rv, (_regexp_flags || 'g'));
+      try {
+        rv = new RegExp(rv, (_regexp_flags || 'g'));
+      } catch (_e) {
+        throw new Error(`Invalid regular expression /${rv}/`);
+      }
+    }
+
+    return rv;
+  }
+
+  /**
+   */
+  _create_regexp_array_if (_a, _is_regexp, _regexp_flags) {
+
+    let rv = _a;
+
+    for (let i = 0, len = rv.length; i < len; ++i) {
+      rv[i] = this._create_regexp_if(rv[i], _is_regexp, _regexp_flags);
     }
 
     return rv;
@@ -201,17 +240,17 @@ const CLI = class extends Base {
       return this._lines;
     }
 
-    return (
-      (this._lines = await this._line_factory(this._process.stdin))
-    );
+    this._lines = await this._line_factory(process.stdin);
+    this._next_line = Oath.promisify(this._lines.nextLine);
+
+    return this;
   }
 
   /**
    */
   _fatal (_str, _err_extra) {
 
-    this._process.stderr.write(`[fatal] ${_str}\n`);
-    this._process.exit(127);
+    this._io.fatal(_str);
   }
 
 };
