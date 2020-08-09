@@ -155,6 +155,20 @@ const CLI = class extends Base {
 
   /**
    */
+  async _lazy_open_lines () {
+
+    if (this._lines) {
+      return this._lines;
+    }
+
+    this._lines = await this._line_factory(process.stdin);
+    this._next_line = Oath.promisify(this._lines.nextLine);
+
+    return this;
+  }
+
+  /**
+   */
   _create_boolean_hash (_array) {
 
     let rv = {};
@@ -260,20 +274,6 @@ const CLI = class extends Base {
     }
 
     return rv;
-  }
-
-  /**
-   */
-  async _lazy_open_lines () {
-
-    if (this._lines) {
-      return this._lines;
-    }
-
-    this._lines = await this._line_factory(process.stdin);
-    this._next_line = Oath.promisify(this._lines.nextLine);
-
-    return this;
   }
 
   /**

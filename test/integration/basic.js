@@ -154,6 +154,10 @@ describe('cli', () => {
       'delete', '-r', '-x', 'D', '-n', 'Baz=N?o?Remo+ve'
     ]);
 
+    await iniedit(file, [
+      'delete', '-m', '  Comment  '
+    ]);
+
     await iniedit_final(file, expect_file);
     return await unlink(file);
   });

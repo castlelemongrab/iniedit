@@ -131,8 +131,7 @@ const Ini = class extends Base {
 
     let where = (_where || []);
     let sections = (_sections || []);
-    let comment_where = (_comment_where || []);
-
+    let comment_where = this._trim_strings(_comment_where || []);
     let matches_required = (where.length + comment_where.length);
 
     /* For each top-level node */
@@ -381,6 +380,21 @@ const Ini = class extends Base {
     }
 
     return n;
+  }
+
+  /**
+  */
+  _trim_strings (_strings) {
+
+    let rv = _strings;
+
+    for (var i = 0, len = rv.length; i < len; ++i) {
+      if (typeof rv[i] === 'string') {
+        rv[i] = rv[i].trim();
+      }
+    }
+
+    return rv;
   }
 
   /**

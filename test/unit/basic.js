@@ -76,6 +76,7 @@ describe('basic', () => {
     ini.delete_section([], [['Foo', 'Remove' ]]);
     ini.delete_section([], [[ /^Dele?t?e?$/, /.*/ ]], [ /^regexp propert(y|(ies+))/ ]);
     ini.delete_section([ 'D' ], [['Baz', /N?o?Remo+ve/ ]]);
+    ini.delete_section([], [], [ '  Comment  ' ]);
 
     ini.serialize();
     expect(io.toString()).to.equal(o);
