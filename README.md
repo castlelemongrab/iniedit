@@ -224,7 +224,7 @@ are available in the `test/integration` directory, or via `bin/iniedit -h`.
 Credits
 -------
 
-Copyright 2020, David Brown
+Copyright 2020, David Brown  
 Copyright 2020, Baby Britain, Ltd.
 
 
