@@ -33,6 +33,22 @@ A = 1
 B = 2
 ```
 
+### Example: Conditionally add a new INI section
+
+If a section named `Section` exists with property values `A = 1` and `B = 2`,
+then add a new section named `Section #2` with properties `A = 2` and `B=3`.
+
+```shell
+iniedit add -f my.ini -x Section -n A=1 -n B=2 -s 'Section #2' -l A=2 -l B=3
+[Section]
+# Comment
+A = 1
+B = 2
+[Section #2]
+A = 2
+B = 3
+```
+
 CLI Documentation
 -----------------
 
