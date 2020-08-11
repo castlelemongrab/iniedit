@@ -201,10 +201,10 @@ least one already-existing section in the abstract syntax tree.
   </dd>
   <dt><code>_should_prepend</code></dt>
   <dd>
-    True if the section should be added at the beginning of the abstract
-    syntax tree (and therefore at the top of the resulting INI file). False
-    if the section should be appended to the abstract syntax tree (and
-    therefore at the bottom of the resulting INI file).
+    <i>Optional</i>: True if the section should be added at the beginning of
+    the abstract syntax tree (and therefore at the top of the resulting INI
+    file). False or false-like if the section should be appended to the
+    abstract syntax tree (and therefore at the bottom of the resulting file).
   </dd>
   <dt><code>_sections, _where, _comment_where</code></dt>
   <dd>
