@@ -99,7 +99,6 @@ with `Section` and has a `Type` of `Awesome`.
 ```shell
 iniedit modify -f my-2.ini -r \
   -x '^Section.*$' -n 'Type=Awesome!?' -l ' Key = Value' -m Extra > my.ini
-```
 
 [Section]
 # Extra
