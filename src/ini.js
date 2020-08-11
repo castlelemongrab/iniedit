@@ -127,7 +127,6 @@ const Ini = class extends Base {
   transform_section (_sections, _where, _comment_where, _fn) {
 
     let rv = 0;
-    let property_indices = {};
 
     let where = (_where || []);
     let sections = (_sections || []);
@@ -171,7 +170,7 @@ const Ini = class extends Base {
         rv++;
 
         /* Perform transform; break on false return value*/
-        if (!_fn(i, section, property_indices)) {
+        if (!_fn(i, section)) {
           break;
         }
       }
