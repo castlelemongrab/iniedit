@@ -62,7 +62,6 @@ property) named `Type` in any INI file section that begins with `Section`.
 ```shell
 iniedit modify -f my-2.ini -r \
   -x '^Section.*' -l Type=Awesome > my.ini
-```
 
 [Section]
 # Comment
@@ -73,7 +72,7 @@ Type = Awesome
 A = 2
 B = 3
 Type = Awesome
-`
+```
 
 ### Example: Deleting a section with regular expressions
 
@@ -84,7 +83,6 @@ matching property value; the key is ignored.
 ```shell
 iniedit delete -f my.ini \
   -r -n '.*=3' > my-2.ini
-```
 
 [Section]
 # Comment
