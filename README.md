@@ -26,7 +26,7 @@ to view built-in documentation.
 ### Example: Build an INI file from /dev/null
 
 ```shell
-$ ./bin/iniedit add -f /dev/null -s Section -l A=1 -l B=2 -c Comment > my.ini
+$ iniedit add -f /dev/null -s Section -l A=1 -l B=2 -c Comment > my.ini
 [Section]
 # Comment
 A = 1
