@@ -23,6 +23,16 @@ modification of INI files. To get started, run `npm i @castlelemongrab/iniedit`,
 then `iniedit -h`, `iniedit add -h`, `iniedit delete -h`, or `iniedit modify -h`
 to view built-in documentation.
 
+### Example: Build an INI file from /dev/null
+
+```shell
+$ ./bin/iniedit add -f /dev/null -s Section -l A=1 -l B=2 -c Comment > my.ini
+[Section]
+# Comment
+A = 1
+B = 2
+```
+
 CLI Documentation
 -----------------
 
