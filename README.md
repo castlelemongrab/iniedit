@@ -26,7 +26,9 @@ to view built-in documentation.
 ### Example: Build an INI file from /dev/null
 
 ```shell
-$ iniedit add -f /dev/null -s Section -l A=1 -l B=2 -c Comment > my.ini
+$ iniedit add -f /dev/null \
+  -s Section -l A=1 -l B=2 -c Comment > my.ini
+
 [Section]
 # Comment
 A = 1
@@ -39,7 +41,9 @@ If a section named `Section` exists with property values `A = 1` and `B = 2`,
 then add a new section named `Section #2` with properties `A = 2` and `B=3`.
 
 ```shell
-iniedit add -f my.ini -x Section -n A=1 -n B=2 -s 'Section #2' -l A=2 -l B=3
+iniedit add -f my.ini \
+  -x Section -n A=1 -n B=2 -s 'Section #2' -l A=2 -l B=3 | tee my-2.ini
+
 [Section]
 # Comment
 A = 1
@@ -47,6 +51,27 @@ B = 2
 [Section #2]
 A = 2
 B = 3
+```
+
+### Example: Adding a property to multiple sections
+
+Regular expressions can be used to match section names, property names, and
+property values. This example adds or replaces an INI line (N.B. section
+property) named `Type` in any INI file section that begins with `Section`.
+
+```shell
+$ iniedit modify -f my-2.ini \
+    -r -x '^Section.*' -l Type=Awesome | tee my.ini
+
+[Section]
+# Comment
+A = 1
+B = 2
+Type = Awesome
+[Section #2]
+A = 2
+B = 3
+Type = Awesome
 ```
 
 CLI Documentation
