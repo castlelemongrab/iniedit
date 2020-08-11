@@ -61,6 +61,19 @@ describe('cli', () => {
     return await io.write_file(_file, out);
   }
 
+  it('should work with an zero byte input file', async () => {
+
+    let expect_file = path.join(fixtures_out, 'empty-001.ini');
+    let file = await iniedit_init(path.join(fixtures_in, 'empty-001.ini'));
+
+    await iniedit(file, [
+      'add', '-s', 'Section', '-l', 'A=1', '-c', 'Comment'
+    ]);
+
+    await iniedit_final(file, expect_file);
+    return await unlink(file);
+  });
+
   it('should be able to add INI sections', async () => {
 
     let expect_file = path.join(fixtures_out, 'add-001.ini');

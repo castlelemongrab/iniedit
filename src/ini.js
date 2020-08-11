@@ -105,6 +105,24 @@ const Ini = class extends Base {
   }
 
   /**
+    Return true if the criteria specified evaluate to an empty expression,
+    false otherwise. This test allows for default-permissive behavior
+    in addition to default-nonmatch behavior. For more information on
+    the structure and format of these arguments, consult the documentation
+    for the `transform_section` method.
+  */
+  is_empty_criteria (_sections, _where, _comment_where) {
+
+    let where = (_where || []);
+    let sections = (_sections || []);
+    let comment_where = (_comment_where || []);
+
+    return (
+      (where.length + sections.length + comment_where.length) <= 0
+    );
+  }
+
+  /**
     Transform the parsed INI file according to a set of rules.
 
     @arg _sections {Array} - An array of section names to which the
@@ -160,8 +178,6 @@ const Ini = class extends Base {
           }
         }
       }
-
-      /* Fully-empty criteria does not match */
 
       /* Check if clause is satisfied */
       if (n >= matches_required) {
@@ -292,7 +308,13 @@ const Ini = class extends Base {
       _sections, _where, _comment_where, () => false
     );
 
-    if (n <= 0) {
+    let does_match = (
+      (n > 0) || this.is_empty_criteria(
+        _sections, _where, _comment_where
+      )
+    );
+
+    if (!does_match) {
       return 0;
     }
 

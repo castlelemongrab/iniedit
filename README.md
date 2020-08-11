@@ -2,23 +2,111 @@
 iniedit
 =======
 
+Introduction
+------------
+
 The `iniedit` utility is a small program for adding, updating, and deleting
 sections and/or entries in Common INI Format files. It provides a Javascript
 API and command-line interface, and allows for conditional criteria to be
-specified as preconditions for any section addition, deletion, or modification
+specified as preconditions for any section modifiction, addition, or deletion
 operation.
 
 This repository is a work in progress and should not be used in production
 at this time.
 
+Quick Start
+-----------
+
+In addition to an ES7 Javascript API, this package provides a fully-functional
+command-line executable called `iniedit`, which is suitable for small one-off
+modification of INI files. To get started, run `npm i @castlelemongrab/iniedit`,
+then `iniedit -h`, `iniedit add -h`, `iniedit delete -h`, or `iniedit modify -h`
+to view built-in documentation.
+
+CLI Documentation
+-----------------
+
+```
+iniedit <command>
+
+Commands:
+  iniedit add     Add an entire section to an INI file
+  iniedit delete  Delete an entire section of an INI file
+  iniedit modify  Modify properties in an INI file section
+
+Options:
+  --version              Show version number                           [boolean]
+  -h, --help             Show help                                     [boolean]
+  -f, --file             The input file in common INI format [string] [required]
+  -x, --require-section  Only modify this section name matches           [array]
+  -n, --require-line     Only modify if this line exists                 [array]
+  -m, --require-comment  Only modify if this comment exists              [array]
+  -r, --regex            Interpret match criteria as expressions       [boolean]
+```
+```
+iniedit add
+
+Add an entire section to an INI file
+
+Options:
+  --version              Show version number                           [boolean]
+  -h, --help             Show help                                     [boolean]
+  -f, --file             The input file in common INI format [string] [required]
+  -x, --require-section  Only modify this section name matches           [array]
+  -n, --require-line     Only modify if this line exists                 [array]
+  -m, --require-comment  Only modify if this comment exists              [array]
+  -r, --regex            Interpret match criteria as expressions       [boolean]
+  -s, --section          The name of the section to add      [string] [required]
+  -l, --line             A line to add, or key name to read from stdin   [array]
+  -c, --comment          A comment string to add                         [array]
+  -t, --top              Add the new section to the top of the file    [boolean]
+```
+```
+iniedit delete
+
+Delete an entire section of an INI file
+
+Options:
+  --version              Show version number                           [boolean]
+  -h, --help             Show help                                     [boolean]
+  -f, --file             The input file in common INI format [string] [required]
+  -x, --require-section  Only modify this section name matches           [array]
+  -n, --require-line     Only modify if this line exists                 [array]
+  -m, --require-comment  Only modify if this comment exists              [array]
+  -r, --regex            Interpret match criteria as expressions       [boolean]
+```
+```
+iniedit modify
+
+Modify properties in an INI file section
+
+Options:
+  --version              Show version number                           [boolean]
+  -h, --help             Show help                                     [boolean]
+  -f, --file             The input file in common INI format [string] [required]
+  -x, --require-section  Only modify this section name matches           [array]
+  -n, --require-line     Only modify if this line exists                 [array]
+  -m, --require-comment  Only modify if this comment exists              [array]
+  -r, --regex            Interpret match criteria as expressions       [boolean]
+  -l, --line             A line to add, or key name to read from stdin   [array]
+  -c, --comment          A comment string to add                         [array]
+  -d, --delete-line      A line name to delete                           [array]
+  -o, --delete-comment   A comment string to delete                      [array]
+  -e, --section          A replacement section name                     [string]
+```
 
 API Documentation
 -----------------
 
 <a name="constructor" />
 <h3><pre>
-let ini = new Ini(_string: String, _options: Object)
+ini
 </pre></h3>
+
+```typescript
+ini = new Ini(_string: String, _options: Object)
+```
+
 <p>
 Create a new instance of the INI file modification engine.
 </p>
@@ -35,8 +123,13 @@ Create a new instance of the INI file modification engine.
 
 <a name="parse" />
 <h3><pre>
-ini.parse(_string: String)
+ini.parse
 </pre></h3>
+
+```typescript
+ini.parse(_string: String)
+```
+
 <p>
 Parse an INI file from a <code>String</code> or <code>Buffer</code>.
 </p>
@@ -60,13 +153,18 @@ via the constructor's <code>_options.io</code> parameter.
 
 <a name="transform_section" />
 <h3><pre>
+ini.transform_section
+</pre></h3>
+
+```typescript
 ini.transform_section(
-  _sections: Array&lt;String|RegExp&gt;,
-    _where: Array&lt;[k: String|RegExp, v: String|RegExp]&gt;,
-    _comment_where: Array&lt;String|RegExp&gt;,
+  _sections: Array<String|RegExp>,
+    _where: Array<[k: String|RegExp, v: String|RegExp]>,
+    _comment_where: Array<String|RegExp>,
     _fn: Function(_i: Number, _section: Object)
 )
-</pre></h3>
+```
+
 <p>
 Call <code>_fn</code> and allow it to modify any section of the parsed INI
 file's abstract syntax tree if it matches.
@@ -102,16 +200,19 @@ file's abstract syntax tree if it matches.
 </dl>
 
 <a name="delete_section" />
-<h3>
-<pre>
+<h3><pre>
+ini.delete_section
+</pre></h3>
+
+```typescript
 ini.delete_section(
-  _sections: Array&lt;String|RegExp&gt;,
-    _where: Array&lt;[k: String|RegExp, v: String|RegExp]&gt;,
-    _comment_where: Array&lt;String|RegExp&gt;,
+  _sections: Array<String|RegExp>,
+    _where: Array<[k: String|RegExp, v: String|RegExp]>,
+    _comment_where: Array<String|RegExp>,
     _fn: Function(_i: Number, _section: Object)
 )
-</pre>
-</h3>
+```
+
 <p>
 Remove an INI file section that matches the <code>_sections</code>,
 <code>_where</code>, and <code>_comment_where</code> criteria.
@@ -127,16 +228,19 @@ Remove an INI file section that matches the <code>_sections</code>,
 
 
 <a name="modify_section" />
-<h3>
-<pre>
+<h3><pre>
+ini.modify_section
+</pre></h3>
+
+```typescript
 ini.modify_section(
-  _sections: Array&lt;String|RegExp&gt;,
-    _where: Array&lt;[k: String|RegExp, v: String|RegExp]&gt;,
-    _comment_where: Array&lt;String|RegExp&gt;,
+  _sections: Array<String|RegExp>,
+    _where: Array<[k: String|RegExp, v: String|RegExp]>,
+    _comment_where: Array<String|RegExp>,
     _properties: Object, _comments: Object, _name: String
 )
-</pre>
-</h3>
+```
+
 <p>
 Modify an INI file section that matches the <code>_sections</code>,
 <code>_where</code>, and <code>_comment_where</code> criteria.
@@ -173,17 +277,20 @@ Modify an INI file section that matches the <code>_sections</code>,
 </dl>
 
 <a name="add_section" />
-<h3>
-<pre>
+<h3><pre>
+ini.add_section
+</pre></h3>
+
+```typescript
 ini.add_section(
   _name: String, _properties: Object, _comments: Object,
   _should_prepend: Boolean,
-  _sections: Array&lt;String|RegExp&gt;,
-    _where: Array&lt;[k: String|RegExp, v: String|RegExp]&gt;,
-    _comment_where: Array&lt;String|RegExp&gt;,
+  _sections: Array<String|RegExp>,
+    _where: Array<[k: String|RegExp, v: String|RegExp]>,
+    _comment_where: Array<String|RegExp>,
 )
-</pre>
-</h3>
+```
+
 <p>
 Add a new section to an INI file provided that the <code>_sections</code>,
 <code>_where</code>, and <code>_comment_where</code> criteria match at
@@ -213,14 +320,6 @@ least one already-existing section in the abstract syntax tree.
     method.
   </dd>
 </dl>
-
-
-CLI Documentation
------------------
-
-This section will be completed shortly. In the mean time, help and examples
-are available in the `test/integration` directory, or via `bin/iniedit -h`.
-
 
 
 Credits

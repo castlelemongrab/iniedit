@@ -43,7 +43,7 @@ const CLI = class extends Base {
     try {
       this._ini.parse(await this._io.read_file(args.f));
     } catch (_e) {
-      this._fatal(`Unable to parse file '${args.f}`, _e);
+      this._fatal(`Unable to parse file '${args.f}'`, _e);
     }
 
     let rv = await this._run_command(args);
