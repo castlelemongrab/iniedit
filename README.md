@@ -59,16 +59,14 @@ via the constructor's <code>_options.io</code> parameter.
 </p>
 
 <a name="transform_section" />
-<h3>
-<pre>
+<h3><pre>
 ini.transform_section(
   _sections: Array&lt;String|RegExp&gt;,
     _where: Array&lt;[k: String|RegExp, v: String|RegExp]&gt;,
     _comment_where: Array&lt;String|RegExp&gt;,
     _fn: Function(_i: Number, _section: Object)
 )
-</pre>
-</h3>
+</pre></h3>
 <p>
 Call <code>_fn</code> and allow it to modify any section of the parsed INI
 file's abstract syntax tree if it matches.
@@ -192,6 +190,10 @@ Add a new section to an INI file provided that the <code>_sections</code>,
 least one already-existing section in the abstract syntax tree.
 </p>
 <dl>
+  <dt><code>_name</code></dt>
+  <dd>
+    <b>Required</b>: The name of the new section to be added.
+  </dd>
   <dt><code>_properties, _comments</code></dt>
   <dd>
     For information on what these arguments mean and how they are structured,
