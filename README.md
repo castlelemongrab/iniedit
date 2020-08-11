@@ -26,7 +26,7 @@ to view built-in documentation.
 ### Example: Build an INI file from /dev/null
 
 ```shell
-$ iniedit add -f /dev/null \
+iniedit add -f /dev/null \
   -s Section -l A=1 -l B=2 -c Comment > my.ini
 
 [Section]
@@ -41,8 +41,8 @@ If a section named `Section` exists with property values `A = 1` and `B = 2`,
 then add a new section named `Section #2` with properties `A = 2` and `B=3`.
 
 ```shell
-iniedit add -f my.ini \
-  -x Section -n A=1 -n B=2 -s 'Section #2' -l A=2 -l B=3 | tee my-2.ini
+iniedit add \
+  -f my.ini -x Section -n A=1 -n B=2 -s 'Section #2' -l A=2 -l B=3 > my-2.ini
 
 [Section]
 # Comment
@@ -60,8 +60,9 @@ property values. This example adds or replaces an INI line (N.B. section
 property) named `Type` in any INI file section that begins with `Section`.
 
 ```shell
-$ iniedit modify -f my-2.ini \
-    -r -x '^Section.*' -l Type=Awesome | tee my.ini
+iniedit modify -f my-2.ini -r \
+  -x '^Section.*' -l Type=Awesome > my.ini
+```
 
 [Section]
 # Comment
@@ -72,6 +73,43 @@ Type = Awesome
 A = 2
 B = 3
 Type = Awesome
+`
+
+### Example: Deleting a section with regular expressions
+
+Regular expressions can be used to match section names, property names, and
+property values. This example seletes an INI section thst has a certain
+matching property value; the key is ignored.
+
+```shell
+iniedit delete -f my.ini \
+  -r -n '.*=3' > my-2.ini
+```
+
+[Section]
+# Comment
+A = 1
+B = 2
+Type = Awesome
+```
+
+### Example: Editing properties
+
+This example adds a new key/value pair and comment to any section that starts
+with `Section` and has a `Type` of `Awesome`.
+
+```shell
+iniedit modify -f my-2.ini -r \
+  -x '^Section.*$' -n 'Type=Awesome!?' -l ' Key = Value' -m Extra > my.ini
+```
+
+[Section]
+# Extra
+# Comment
+A = 1
+B = 2
+Type = Awesome
+Key = Value
 ```
 
 CLI Documentation
