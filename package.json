@@ -1,6 +1,6 @@
 {
   "name": "@castlelemongrab/iniedit",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "MIT",
   "description": "A simple command-line INI file editing tool based on ini-parser",
   "author": "Castle Lemongrab, a subsidiary of Baby Britain, Ltd.",
