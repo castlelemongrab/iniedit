@@ -4,6 +4,7 @@
 
 const Ini = require('./ini');
 const Base = require('./base');
+const jsdump = require('jsDump');
 const process = require('process');
 const Arguments = require('./arguments');
 const IO = require('@castlelemongrab/ioh');
@@ -37,17 +38,32 @@ const CLI = class extends Base {
    */
   async run () {
 
-    let args = this._args.parse();
-    this._validate_args(args);
+    let args;
 
     try {
-      this._ini.parse(await this._io.read_file(args.f));
-    } catch (_e) {
-      this._fatal(`Unable to parse file '${args.f}'`, _e);
-    }
 
-    let rv = await this._run_command(args);
-    this._ini.serialize();
+      args = this._args.parse();
+      this._validate_args(args);
+
+      try {
+        this._ini.parse(await this._io.read_file(args.f));
+      } catch (_e) {
+        console.log(_e);
+        this._fatal(`Unable to parse file '${args.f}'`, _e);
+      }
+
+      let rv = await this._run_command(args);
+      this._ini.serialize();
+
+    } catch (_e) {
+
+      if (args.v) {
+        this._io.warn('Error; stack trace is starting');
+        console.debug(_e);
+      }
+
+      this._io.fatal('A fatal internal error occurred, use -v for details');
+    }
 
     return true;
   }

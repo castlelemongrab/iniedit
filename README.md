@@ -11,11 +11,11 @@ API and command-line interface, and allows for conditional criteria to be
 specified as preconditions for any section modifiction, addition, or deletion
 operation.
 
-This repository is a work in progress and should not be used in production
-at this time.
+This repository is a work in progress and absolutely should not be used in
+production at this time.
 
-Quick Start
------------
+CLI Quick Start
+---------------
 
 In addition to an ES7 Javascript API, this package provides a fully-functional
 command-line executable called `iniedit`, which is suitable for small one-off
@@ -42,7 +42,7 @@ then add a new section named `Section #2` with properties `A = 2` and `B=3`.
 
 ```shell
 iniedit add \
-  -f my.ini -x Section -n A=1 -n B=2 -s 'Section #2' -l A=2 -l B=3 > my-2.ini
+  -f my.ini -x Section -n A=1 -n B=2 -s 'Section #2' -l A=2 -l B=3
 
 [Section]
 # Comment
@@ -60,8 +60,8 @@ property values. This example adds or replaces an INI line (N.B. section
 property) named `Type` in any INI file section that begins with `Section`.
 
 ```shell
-iniedit modify -f my-2.ini -r \
-  -x '^Section.*' -l Type=Awesome > my.ini
+iniedit modify -f my.ini \
+  -r -x '^Section.*' -l Type=Awesome
 
 [Section]
 # Comment
@@ -82,7 +82,7 @@ matching property value; the key is ignored.
 
 ```shell
 iniedit delete -f my.ini \
-  -r -n '.*=3' > my-2.ini
+  -r -n '.*=3'
 
 [Section]
 # Comment
@@ -112,6 +112,13 @@ Key = Value
 CLI Documentation
 -----------------
 
+The command-line interface makes references to INI file "lines"; these are
+section-contained INI properties specified as `key = value` pair arguments.
+Backslash (`\`) is the escape character for the `key` portion; values are
+currently passed along as-is. This CLI escaping behavior – along with escaping
+and quoting behavior in serialized INI files themselves – will be made more
+configurable in a future version.
+
 ```
 iniedit <command>
 
@@ -123,6 +130,7 @@ Commands:
 Options:
   --version              Show version number                           [boolean]
   -h, --help             Show help                                     [boolean]
+  -v, --verbose          Print extra information to standard error     [boolean]
   -f, --file             The input file in common INI format [string] [required]
   -x, --require-section  Only modify this section name matches           [array]
   -n, --require-line     Only modify if this line exists                 [array]
@@ -137,6 +145,7 @@ Add an entire section to an INI file
 Options:
   --version              Show version number                           [boolean]
   -h, --help             Show help                                     [boolean]
+  -v, --verbose          Print extra information to standard error     [boolean]
   -f, --file             The input file in common INI format [string] [required]
   -x, --require-section  Only modify this section name matches           [array]
   -n, --require-line     Only modify if this line exists                 [array]
@@ -155,6 +164,7 @@ Delete an entire section of an INI file
 Options:
   --version              Show version number                           [boolean]
   -h, --help             Show help                                     [boolean]
+  -v, --verbose          Print extra information to standard error     [boolean]
   -f, --file             The input file in common INI format [string] [required]
   -x, --require-section  Only modify this section name matches           [array]
   -n, --require-line     Only modify if this line exists                 [array]
@@ -169,6 +179,7 @@ Modify properties in an INI file section
 Options:
   --version              Show version number                           [boolean]
   -h, --help             Show help                                     [boolean]
+  -v, --verbose          Print extra information to standard error     [boolean]
   -f, --file             The input file in common INI format [string] [required]
   -x, --require-section  Only modify this section name matches           [array]
   -n, --require-line     Only modify if this line exists                 [array]

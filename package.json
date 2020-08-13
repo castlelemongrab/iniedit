@@ -14,6 +14,7 @@
     "@castlelemongrab/oath": "^0.0.2",
     "@castlelemongrab/strr": "^0.0.1",
     "@jedmao/ini-parser": "^0.2.4",
+    "jsDump": "^1.1.0",
     "line-reader": "^0.4.0",
     "yargs": "^15.4.1"
   },

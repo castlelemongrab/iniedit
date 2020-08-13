@@ -42,6 +42,13 @@ const Arguments = class extends Base {
         }
       )
       .option(
+        'v', {
+          type: 'boolean',
+          alias: 'verbose',
+          describe: 'Print extra information to standard error'
+        }
+      )
+      .option(
         'f', {
           type: 'string',
           alias: 'file',
