@@ -19,16 +19,30 @@ const Ini = class extends Base {
     super(_options);
 
     this._tree = null;
-    this._comment_char = '#';
     this._parser = new ini.default();
     this._io = (this.options.io || new IO.Base());
-    this._parser.configure({ comment: new RegExp(this._comment_char) });
+
+    this.comment_prefix = '# ';
 
     if (_string != null) {
       this.parse(_string);
     }
 
     return this;
+  }
+
+  /**
+  **/
+  get comment_prefix () {
+
+    return this._comment_prefix;
+  }
+
+  /**
+  **/
+  set comment_prefix (_str) {
+
+    this._comment_prefix = _str;
   }
 
   /**
@@ -96,7 +110,7 @@ const Ini = class extends Base {
         let node = nodes[j];
 
         if (node instanceof ini.Comment) {
-          this._emit_comment(node.text);
+          this._emit_comment(node.text.trim());
         } else if (node instanceof ini.Property) {
           this._emit_property(node.key, node.value);
         }
@@ -275,7 +289,9 @@ const Ini = class extends Base {
         /* Build new comments */
         for (let k in comments) {
           if (comments[k] !== null) {
-            new_comments.push(new ini.Comment(this._comment_char, ` ${k}`));
+            new_comments.push(
+              new ini.Comment(this.comment_prefix, k)
+            );
           }
         }
 
@@ -324,7 +340,7 @@ const Ini = class extends Base {
     /* Append comments */
     for (let i = 0, len = comments.length; i < len; ++i) {
       ini_section.nodes.push(new ini.Comment(
-        this._comment_char, ` ${comments[i]}`
+        this._comment_prefix, comments[i].toString()
       ));
     }
 
@@ -441,7 +457,7 @@ const Ini = class extends Base {
   */
   _emit_comment (_str) {
 
-    this.emit(`#${_str}`);
+    this.emit(`${this.comment_prefix}${_str}`);
     return this;
   }
 
