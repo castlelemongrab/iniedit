@@ -12,7 +12,6 @@ const Strr = require('@castlelemongrab/strr');
 const Oath = require('@castlelemongrab/oath');
 
 /**
-  The command-line interface to Parlance.
   @extends Base
 **/
 const CLI = class extends Base {
@@ -23,10 +22,17 @@ const CLI = class extends Base {
 
     super(_options);
 
+    this._line_factory = Oath.promisify(require('line-reader').open);
+    return this.reset();
+  }
+
+  /**
+   */
+  reset (_options) {
+
     this._ini = new Ini();
     this._args = new Arguments();
     this._io = (this.options.io || new IO.Node());
-    this._line_factory = Oath.promisify(require('line-reader').open);
 
     this._lines = null;
     this._next_line = null;
@@ -48,12 +54,15 @@ const CLI = class extends Base {
       try {
         this._ini.parse(await this._io.read_file(args.f));
       } catch (_e) {
-        console.log(_e);
         this._fatal(`Unable to parse file '${args.f}'`, _e);
       }
 
       let rv = await this._run_command(args);
-      this._ini.serialize();
+
+      /* If output is actually intended to be an INI file... */
+      if (args._[0] !== 'read') {
+        this._ini.serialize();
+      }
 
     } catch (_e) {
 
@@ -75,6 +84,11 @@ const CLI = class extends Base {
     let is_valid = true;
 
     switch (_args._[0]) {
+      case 'read':
+        is_valid = (
+          _args.l != null || _args.c != null
+        );
+        break;
       case 'delete':
         is_valid = (
           _args.x != null || _args.n != null || _args.m != null
@@ -91,7 +105,7 @@ const CLI = class extends Base {
     }
 
     if (!is_valid) {
-      this._fatal('No modification operations specified');
+      this._fatal('No operations specified');
     }
 
     return this;
@@ -100,6 +114,8 @@ const CLI = class extends Base {
   /**
    */
   async _run_command (_args) {
+
+    let rv = 0;
 
     /* Regexp support */
     try {
@@ -110,19 +126,25 @@ const CLI = class extends Base {
 
     /* Translate to API */
     switch (_args._[0]) {
+      case 'read':
+        rv = this._ini.read_properties(
+          _args.x, await this._create_tuple_array(_args.n, _args.r), _args.m,
+            this._create_boolean_hash(_args.l), _args.c
+        );
+        break;
       case 'add':
-        this._ini.add_section(
+        rv = this._ini.add_section(
           _args.s, await this._create_tuple_hash(_args.l), _args.c, _args.t,
             _args.x, await this._create_tuple_array(_args.n, _args.r), _args.m
         );
         break;
       case 'delete':
-        this._ini.delete_section(
+        rv = this._ini.delete_section(
           _args.x, await this._create_tuple_array(_args.n, _args.r), _args.m
         );
         break;
       case 'modify':
-        this._ini.modify_section(
+        rv = this._ini.modify_section(
           _args.x,
           await this._create_tuple_array(_args.n, _args.r),
           _args.m,
@@ -137,7 +159,7 @@ const CLI = class extends Base {
         break;
     }
 
-    return this;
+    return rv;
   }
 
   /**
@@ -182,7 +204,6 @@ const CLI = class extends Base {
 
     return this;
   }
-
   /**
    */
   _create_boolean_hash (_array) {
@@ -243,6 +264,23 @@ const CLI = class extends Base {
 
   /**
    */
+  _add_hash_nulls (_hash, _key_array) {
+
+    let rv = _hash;
+
+    if (_key_array == null) {
+      return rv;
+    }
+
+    for (let i = 0, len = _key_array.length; i < len; ++i) {
+      rv[_key_array[i]] = null;
+    }
+
+    return rv;
+  }
+
+  /**
+   */
   _create_regexp_if (_str, _is_regexp, _regexp_flags) {
 
     let rv = _str.toString();
@@ -275,22 +313,6 @@ const CLI = class extends Base {
     return rv;
   }
 
-  /**
-   */
-  _add_hash_nulls (_hash, _key_array) {
-
-    let rv = _hash;
-
-    if (_key_array == null) {
-      return rv;
-    }
-
-    for (let i = 0, len = _key_array.length; i < len; ++i) {
-      rv[_key_array[i]] = null;
-    }
-
-    return rv;
-  }
 
   /**
    */
@@ -298,7 +320,6 @@ const CLI = class extends Base {
 
     this._io.fatal(_str);
   }
-
 };
 
 /* Export symbols */

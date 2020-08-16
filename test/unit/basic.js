@@ -22,7 +22,7 @@ describe('basic', () => {
   it('should be able to read a fixture', () => {
 
     let str = chai.factory.create(
-      'fixture', { type: 'input', name: 'test' }
+      'fixture', { type: 'input', name: 'test-001' }
     );
 
     str.should.be.a.string;
@@ -131,6 +131,19 @@ describe('basic', () => {
     ini.serialize();
     expect(io.toString()).to.equal(o);
   });
+
+
+  it('should be able to read INI properties', () => {
+
+    let [ ini, io, o, i ] = util.init_fixture_test(chai, 'read-001');
+
+    ini.read_properties(
+      [], [], [], { Key: true }, false
+    );
+
+    expect(io.toString()).to.equal(o);
+  });
+
 
 });
 

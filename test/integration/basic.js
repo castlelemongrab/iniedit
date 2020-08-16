@@ -231,5 +231,17 @@ describe('cli', () => {
     return await unlink(file);
   });
 
+  it('should be able to read INI properties', async () => {
+
+    let expect_file = path.join(fixtures_out, 'read-001.ini');
+    let file = await iniedit_init(path.join(fixtures_in, 'read-001.ini'));
+
+    await iniedit(file, [
+      'read', '-l', 'Key'
+    ]);
+
+    await iniedit_final(file, expect_file);
+    return await unlink(file);
+  });
 });
 

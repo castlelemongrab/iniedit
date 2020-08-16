@@ -87,6 +87,21 @@ const Arguments = class extends Base {
           describe: 'Interpret match criteria as expressions'
         }
       )
+     .command(
+        'read', 'Read from one or more matched sections', {
+          l: {
+            array: true,
+            type: 'string',
+            alias: 'line',
+            describe: 'The property/line values to read'
+          },
+          c: {
+            type: 'boolean',
+            alias: 'comments',
+            describe: 'Also print all comments, in order'
+          }
+        }
+      )
       .command(
         'add', 'Add an entire section to an INI file', {
           s: {

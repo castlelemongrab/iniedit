@@ -217,7 +217,41 @@ const Ini = class extends Base {
   delete_section (_sections, _where, _comment_where) {
 
     return this.transform_section(
-      _sections, _where, _comment_where, (_i) => !!this._tree.splice(_i, 1)
+      _sections, _where, _comment_where,
+        (_i) => !!this._tree.splice(_i, 1)
+    );
+  }
+
+  /**
+    Remove an INI file section that matches the `_sections`, `_where`,
+    and `_comment_where` criteria. For more information on what these
+    mean and how they are structured, see the `transform_section` method.
+    This method is primarily intended to assist line-oriented utilities.
+    @arg _names {Object} - A dictionary of property names; values are ignored
+    @arg _comments {Boolean} - True to include all comments, false otherwise.
+  */
+  read_properties (_sections, _where, _comment_where, _names, _comments) {
+
+    return this.transform_section(
+      _sections, _where, _comment_where, (_i, _section) => {
+
+        let nodes = _section.nodes;
+
+        for (let j = 0, len = nodes.length; j < len; ++j) {
+
+          let node = nodes[j];
+
+          if (node instanceof ini.Property) {
+            if (_names[node.key] != null) {
+              this.emit(node.value);
+            }
+          } else if (_comments && node instanceof ini.Comment) {
+              this._emit_comment(node.text.trim());
+          }
+        }
+
+        return true;
+      }
     );
   }
 
@@ -363,11 +397,16 @@ const Ini = class extends Base {
   }
 
   /**
+    Compare `_lhs` and `_rhs` to each other, either as regular
+    expressions or strings. Returns null if asked to compare a
+    regular expression to another regular expression.
+    @arg _lhs {String|RegExp} - The value to match against `_lhs`
+    @arg _rhs {String|RegExp} - The value to match against `_rhs`
   */
   _match_generic (_lhs, _rhs) {
 
     if (_lhs instanceof RegExp && _rhs instanceof RegExp) {
-      return false;
+      return null;
     }
 
     if (_lhs instanceof RegExp) {
