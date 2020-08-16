@@ -255,9 +255,9 @@ ini.transform_section
 
 ```typescript
 ini.transform_section(
-  _sections: Array<String|RegExp>,
-    _where: Array<[k: String|RegExp, v: String|RegExp]>,
-    _comment_where: Array<String|RegExp>,
+  _sections: Array<String|RegExp>?,
+    _where: Array<[k: String|RegExp, v: String|RegExp]>?,
+    _comment_where: Array<String|RegExp>?,
     _fn: Function(_i: Number, _section: Object)
 )
 ```
@@ -303,10 +303,9 @@ ini.delete_section
 
 ```typescript
 ini.delete_section(
-  _sections: Array<String|RegExp>,
-    _where: Array<[k: String|RegExp, v: String|RegExp]>,
-    _comment_where: Array<String|RegExp>,
-    _fn: Function(_i: Number, _section: Object)
+  _sections: Array<String|RegExp>?,
+    _where: Array<[k: String|RegExp, v: String|RegExp]>?,
+    _comment_where: Array<String|RegExp>?
 )
 ```
 
@@ -331,10 +330,10 @@ ini.modify_section
 
 ```typescript
 ini.modify_section(
-  _sections: Array<String|RegExp>,
-    _where: Array<[k: String|RegExp, v: String|RegExp]>,
-    _comment_where: Array<String|RegExp>,
-    _properties: Object, _comments: Object, _name: String
+  _sections: Array<String|RegExp>?,
+    _where: Array<[k: String|RegExp, v: String|RegExp]>?,
+    _comment_where: Array<String|RegExp>?,
+    _properties: Object?, _comments: Object?, _name: String?
 )
 ```
 
@@ -380,11 +379,11 @@ ini.add_section
 
 ```typescript
 ini.add_section(
-  _name: String, _properties: Object, _comments: Object,
-  _should_prepend: Boolean,
-  _sections: Array<String|RegExp>,
-    _where: Array<[k: String|RegExp, v: String|RegExp]>,
-    _comment_where: Array<String|RegExp>,
+  _name: String, _properties: Object?, _comments: Object?,
+  _should_prepend: Boolean?,
+  _sections: Array<String|RegExp>?,
+    _where: Array<[k: String|RegExp, v: String|RegExp]>?,
+    _comment_where: Array<String|RegExp>?
 )
 ```
 
@@ -412,6 +411,7 @@ least one already-existing section in the abstract syntax tree.
   </dd>
   <dt><code>_sections, _where, _comment_where</code></dt>
   <dd>
+    <i>Optional</i>: A predicate match for conditional section addition.
     For information on what these arguments mean and how they are structured,
     see the <a href="#transform_section"><code>transform_section</code></a>
     method.
