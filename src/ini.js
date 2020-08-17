@@ -23,6 +23,7 @@ const Ini = class extends Base {
     this._io = (this.options.io || new IO.Base());
 
     this.comment_prefix = '# ';
+    this._parser.configure({ comment: /#/ });
 
     if (_string != null) {
       this.parse(_string);
