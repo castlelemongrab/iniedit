@@ -97,8 +97,8 @@ This example adds a new key/value pair and comment to any section that starts
 with `Section` and has a `Type` of `Awesome`.
 
 ```shell
-iniedit modify -f my-2.ini -r \
-  -x '^Section.*$' -n 'Type=Awesome!?' -l ' Key = Value' -m Extra > my.ini
+iniedit modify -f my.ini -r \
+  -x '^Section.*$' -n 'Type=Awesome!?' -l ' Key = Value' -m Extra
 
 [Section]
 # Extra
@@ -123,11 +123,12 @@ configurable in a future version.
 iniedit <command>
 
 Commands:
+  iniedit read    Read from one or more matched sections
   iniedit add     Add an entire section to an INI file
   iniedit delete  Delete an entire section of an INI file
   iniedit modify  Modify properties in an INI file section
 
-Options:
+Global Options:
   --version              Show version number                           [boolean]
   -h, --help             Show help                                     [boolean]
   -v, --verbose          Print extra information to standard error     [boolean]
@@ -135,22 +136,24 @@ Options:
   -x, --require-section  Only modify this section name matches           [array]
   -n, --require-line     Only modify if this line exists                 [array]
   -m, --require-comment  Only modify if this comment exists              [array]
-  -r, --regex            Interpret match criteria as expressions       [boolean]
+  -r, --regex            Interpret all match criteria as expressions   [boolean]
+```
+```
+iniedit read
+
+Read from one or more matched sections
+
+Local Options:
+  -l, --line             The property/line values to read                [array]
+  -c, --comments         Also print all comments, in order             [boolean]
+
 ```
 ```
 iniedit add
 
 Add an entire section to an INI file
 
-Options:
-  --version              Show version number                           [boolean]
-  -h, --help             Show help                                     [boolean]
-  -v, --verbose          Print extra information to standard error     [boolean]
-  -f, --file             The input file in common INI format [string] [required]
-  -x, --require-section  Only modify this section name matches           [array]
-  -n, --require-line     Only modify if this line exists                 [array]
-  -m, --require-comment  Only modify if this comment exists              [array]
-  -r, --regex            Interpret match criteria as expressions       [boolean]
+Local Options:
   -s, --section          The name of the section to add      [string] [required]
   -l, --line             A line to add, or key name to read from stdin   [array]
   -c, --comment          A comment string to add                         [array]
@@ -161,30 +164,15 @@ iniedit delete
 
 Delete an entire section of an INI file
 
-Options:
-  --version              Show version number                           [boolean]
-  -h, --help             Show help                                     [boolean]
-  -v, --verbose          Print extra information to standard error     [boolean]
-  -f, --file             The input file in common INI format [string] [required]
-  -x, --require-section  Only modify this section name matches           [array]
-  -n, --require-line     Only modify if this line exists                 [array]
-  -m, --require-comment  Only modify if this comment exists              [array]
-  -r, --regex            Interpret match criteria as expressions       [boolean]
+Local Options:
+  -c, --compactify       Compact whitespace on both sides of deletion  [boolean]
 ```
 ```
 iniedit modify
 
 Modify properties in an INI file section
 
-Options:
-  --version              Show version number                           [boolean]
-  -h, --help             Show help                                     [boolean]
-  -v, --verbose          Print extra information to standard error     [boolean]
-  -f, --file             The input file in common INI format [string] [required]
-  -x, --require-section  Only modify this section name matches           [array]
-  -n, --require-line     Only modify if this line exists                 [array]
-  -m, --require-comment  Only modify if this comment exists              [array]
-  -r, --regex            Interpret match criteria as expressions       [boolean]
+Local Options:
   -l, --line             A line to add, or key name to read from stdin   [array]
   -c, --comment          A comment string to add                         [array]
   -d, --delete-line      A line name to delete                           [array]
@@ -256,7 +244,7 @@ ini.transform_section
 ```typescript
 ini.transform_section(
   _sections: Array<String|RegExp>?,
-    _where: Array<[k: String|RegExp, v: String|RegExp]>?,
+    _where: Array<[ String|RegExp, String|RegExp ]>?,
     _comment_where: Array<String|RegExp>?,
     _fn: Function(_i: Number, _section: Object)
 )
@@ -264,7 +252,8 @@ ini.transform_section(
 
 <p>
 Call <code>_fn</code> and allow it to modify any section of the parsed INI
-file's abstract syntax tree if it matches.
+file's abstract syntax tree if the predicates provided match. A set of
+entirely empty predicates will match any and all sections.
 </p>
 <dl>
   <dt><code>_sections</code></dt>
@@ -379,18 +368,19 @@ ini.add_section
 
 ```typescript
 ini.add_section(
-  _name: String, _properties: Object?, _comments: Object?,
-  _should_prepend: Boolean?,
+  _name: String, _properties: Object?,
+  _comments: Object?, _should_prepend: Boolean?,
   _sections: Array<String|RegExp>?,
-    _where: Array<[k: String|RegExp, v: String|RegExp]>?,
+    _where: Array<[ String|RegExp, String|RegExp ]>?,
     _comment_where: Array<String|RegExp>?
 )
 ```
 
 <p>
-Add a new section to an INI file provided that the <code>_sections</code>,
-<code>_where</code>, and <code>_comment_where</code> criteria match at
-least one already-existing section in the abstract syntax tree.
+Add a new section to an INI file, provided that the <code>_sections</code>,
+<code>_where</code>, and <code>_comment_where</code> criteria match at least
+one section in the abstract syntax tree. If all three criteria are omitted or
+empty, this function considers it a match, and adds the requested section.
 </p>
 <dl>
   <dt><code>_name</code></dt>
@@ -418,11 +408,45 @@ least one already-existing section in the abstract syntax tree.
   </dd>
 </dl>
 
+```typescript
+ini.read_properties(
+  _sections: Array<String|RegExp>?,
+    _where: Array<[ String|RegExp, String|RegExp ]>?,
+    _comment_where: Array<String|RegExp>?,
+    _names: Object, _comments: Boolean?
+)
+```
+<p>
+For all sections matching the <code>_sections</code>, <code>_where</code>,
+and <code>_comment_where</code> criteria, write the INI property values
+print the value of any property name that appears in <code>_names</code>.
+Emit results to the current IO object (or standard ourpur) in file order.
+</p>
+<dl>
+  <dt><code>_sections, _where, _comment_where</code></dt>
+  <dd>
+    For information on what these arguments mean and how they are structured,
+    see the <a href="#transform_section"><code>transform_section</code></a>
+    method.
+  </dd>
+  <dt><code>_names</code></dt>
+    An object containing property names as keys; values for these keys will
+    be printed to the current IO object (or standard output) in file order.
+  <dd>
+  </dd>
+  <dt><code>__comments</code></dt>
+  <dd>
+    <i>Optional</i>: True if all comments in matching sections should be
+    included in the output in file order. Comments will appear in file order.
+  </dd>
+</dl>
+
+
 
 Credits
 -------
 
-Copyright 2020, David Brown  
+Copyright 2020, David Brown
 Copyright 2020, Baby Britain, Ltd.
 
 

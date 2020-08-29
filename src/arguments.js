@@ -84,7 +84,7 @@ const Arguments = class extends Base {
         'r', {
           type: 'boolean',
           alias: 'regex',
-          describe: 'Interpret match criteria as expressions'
+          describe: 'Interpret all match criteria as expressions'
         }
       )
      .command(
@@ -130,7 +130,13 @@ const Arguments = class extends Base {
         }
       )
       .command(
-        'delete', 'Delete an entire section of an INI file'
+        'delete', 'Delete an entire section of an INI file', {
+          c: {
+            type: 'boolean',
+            alias: 'compactify',
+            describe: 'Compact whitespace on both sides of deletion'
+          }
+        }
       )
       .command(
         'modify', 'Modify properties in an INI file section', {
