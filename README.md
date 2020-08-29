@@ -446,7 +446,7 @@ Emit results to the current IO object (or standard ourpur) in file order.
 Credits
 -------
 
-Copyright 2020, David Brown
+Copyright 2020, David Brown  
 Copyright 2020, Baby Britain, Ltd.
 
 

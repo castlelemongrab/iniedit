@@ -1,5 +1,10 @@
+// ✊🏿
+
+'use strict';
 
 let Base = require('./base');
+let Query = require('./query');
+let Transform = require('./transform');
 let ini = require('@jedmao/ini-parser');
 let IO = require('@castlelemongrab/ioh');
 
@@ -19,6 +24,7 @@ const Ini = class extends Base {
     super(_options);
 
     this._tree = null;
+    this._transform = null;
     this._parser = new ini.default();
     this._io = (this.options.io || new IO.Base());
 
@@ -54,10 +60,12 @@ const Ini = class extends Base {
   parse (_string) {
 
     this._tree = this._parser.parse(_string.toString()).items;
-    let n = this.section_count;
+    this._transform = new Transform(this._tree);
+
+    let size = this.size;
 
     /* Remove trailing newline node */
-    if (n > 0 && this.tree[n - 1].name === '') {
+    if (size > 0 && this.tree[size - 1].name === '') {
       this._tree.pop();
     }
 
@@ -76,7 +84,7 @@ const Ini = class extends Base {
   /**
     Return the number of sections in the abstract syntax tree.
   */
-  get section_count () {
+  get size () {
 
     return (
       this._tree != null ? this._tree.length : null
@@ -120,106 +128,16 @@ const Ini = class extends Base {
   }
 
   /**
-    Return true if the criteria specified evaluate to an empty expression,
-    false otherwise. This test allows for default-permissive behavior
-    in addition to default-nonmatch behavior. For more information on
-    the structure and format of these arguments, consult the documentation
-    for the `transform_section` method.
-  */
-  is_empty_criteria (_sections, _where, _comment_where) {
-
-    let where = (_where || []);
-    let sections = (_sections || []);
-    let comment_where = (_comment_where || []);
-
-    return (
-      (where.length + sections.length + comment_where.length) <= 0
-    );
-  }
-
-  /**
-    Transform the parsed INI file according to a set of rules.
-
-    @arg _sections {Array} - An array of section names to which the
-      transformation should apply. Values are case-sensitive section names
-      and/or regular expressions. These are ORed together; any can match.
-    @arg _where {Array} - An array of two-tuple (key/value pair) properties
-      that must match in order for the the transformation to be applied.
-      Both keys and values are case-sensitive, and may be strings or regular
-      expressions. These matches are ANDed together; all clauses must match
-      in order for a section to have a transformation applied.
-    @arg _comment_where {Array} - An array of comment text to which the
-      transformation should apply. Values are case-sensitive comment text
-      and/or regular expressions. These are ANDed together; all must match.
-    @arg _fn {Function} - The transformation function to be applied. The
-      function's prototype is `fn(i, section, indicies)`, where `i` is the
-      section offset in `this.tree`, `section` is the name of the section
-      being transformed, and `indicies` are the zero-based offsets of all
-      properties that were matched by the `_where` clause.
-  */
-  transform_section (_sections, _where, _comment_where, _fn) {
-
-    let rv = 0;
-
-    let where = (_where || []);
-    let sections = (_sections || []);
-    let comment_where = this._trim_strings(_comment_where || []);
-    let matches_required = (where.length + comment_where.length);
-
-    /* For each top-level node */
-    for (let i = 0; i < this._tree.length; ++i) {
-
-      let n = 0, m = 0;
-      let section = this._tree[i];
-      let section_nodes = (section.nodes || []);
-
-      /* Match section */
-      if (sections.length > 0 && !this._match_array(sections, section.name)) {
-        continue;
-      }
-
-      /* Match properties and/or comments */
-      for (let j = 0, ln2 = section_nodes.length; j < ln2; ++j) {
-
-        let node = section_nodes[j];
-
-        if (node instanceof ini.Property && where.length > 0) {
-          if (m = this._match_pairs_array(where, [ node.key, node.value ])) {
-            if (m === 2) { n++; }
-          }
-        } else if (m = node instanceof ini.Comment && comment_where.length) {
-          if (m = this._match_array(comment_where, node.text.trim())) {
-            n += m;
-          }
-        }
-      }
-
-      /* Check if clause is satisfied */
-      if (n >= matches_required) {
-
-        /* Increment section match count */
-        rv++;
-
-        /* Perform transform; break on false return value */
-        if (!_fn(i, section)) {
-          break;
-        }
-      }
-    }
-
-    return rv;
-  }
-
-  /**
     Remove an INI file section that matches the `_sections`, `_where`,
     and `_comment_where` criteria. For more information on what these
     mean and how they are structured, see the `transform_section` method.
   */
   delete_section (_sections, _where, _comment_where) {
 
-    return this.transform_section(
-      _sections, _where, _comment_where,
-        (_i) => !!this._tree.splice(_i, 1)
+    let q = new Query(_sections, _where, _comment_where);
+
+    return this._transform.run(
+      q, (_i) => !!this._tree.splice(_i, 1)
     );
   }
 
@@ -233,33 +151,31 @@ const Ini = class extends Base {
   */
   read_properties (_sections, _where, _comment_where, _names, _comments) {
 
-    return this.transform_section(
-      _sections, _where, _comment_where, (_i, _section) => {
+    let q = new Query(_sections, _where, _comment_where);
 
-        let nodes = _section.nodes;
+    return this._transform.run(q, (_i, _section) => {
 
-        for (let j = 0, len = nodes.length; j < len; ++j) {
+      let nodes = (_section.nodes || []);
 
-          let node = nodes[j];
+      for (let j = 0, len = nodes.length; j < len; ++j) {
 
-          if (node instanceof ini.Property) {
-            if (_names[node.key] != null) {
-              this.emit(node.value);
-            }
-          } else if (_comments && node instanceof ini.Comment) {
-              this._emit_comment(node.text.trim());
+        let n = nodes[j];
+
+        if (n instanceof ini.Property) {
+          if (_names[n.key] != null) {
+            this.emit(n.value);
           }
+        } else if (_comments && n instanceof ini.Comment) {
+            this._emit_comment(n.text.trim());
         }
-
-        return true;
       }
-    );
+
+      return true;
+    });
   }
 
   /**
-    Modify a section of the current INI file that matches the `_sections`,
-    `_where`, and `_comment_where` criteria. For more information on what
-    these mean and how they're structured, consult `transform_section`.
+    Modify a section of the current INI file.
 
     @arg _properties {Object} - A dictionary of properties to add or replace
       should the where clause criteria match. If a property value is exactly
@@ -276,9 +192,9 @@ const Ini = class extends Base {
 
     let comments = (_comments || {});
     let properties = (_properties || {});
+    let q = new Query(_sections, _where, _comment_where);
 
-    return this.transform_section(
-      _sections, _where, _comment_where, (_i, _ini_section) => {
+    return this._transform.run(q, (_i, _ini_section) => {
 
         let new_comments = [];
         let visited_properties = {};
@@ -292,19 +208,19 @@ const Ini = class extends Base {
         /* Modify properties */
         for (let i = 0, len = nodes.length; i < len; ++i) {
 
-          let node = nodes[i];
+          let n = nodes[i];
 
-          if (node instanceof ini.Property) {
-            if (properties[node.key] != null) {
+          if (n instanceof ini.Property) {
+            if (properties[n.key] != null) {
               /* Replace property */
-              visited_properties[node.key] = true;
-              node.value = properties[node.key];
-            } else if (properties[node.key] === null) {
+              visited_properties[n.key] = true;
+              nodes[i].value = properties[n.key];
+            } else if (properties[n.key] === null) {
               /* Delete property */
               nodes.splice(i, 1); --i;
             }
-          } else if (node instanceof ini.Comment) {
-            if (comments[node.text.trim()] === null) {
+          } else if (n instanceof ini.Comment) {
+            if (comments[n.text.trim()] === null) {
               /* Delete comment */
               nodes.splice(i, 1); --i;
             }
@@ -321,7 +237,7 @@ const Ini = class extends Base {
           }
         }
 
-        /* Build new comments */
+        /* Instansiate new comments */
         for (let k in comments) {
           if (comments[k] !== null) {
             new_comments.push(
@@ -353,26 +269,17 @@ const Ini = class extends Base {
 
     let comments = (_comments || []);
     let properties = (_properties || {});
+    let q = new Query(_sections, _where, _comment_where);
 
-    /* Perform optional match predicate */
-    let n = this.transform_section(
-      _sections, _where, _comment_where, () => false
-    );
-
-    let does_match = (
-      (n > 0) || this.is_empty_criteria(
-        _sections, _where, _comment_where
-      )
-    );
-
-    if (!does_match) {
+    /* Match predicate if specified */
+    if (!q.is_empty() && this._transform.run(q, () => false) <= 0) {
       return 0;
     }
 
+    /* Append comments */
     let ini_section = new ini.Section();
     ini_section.name = (_name || '');
 
-    /* Append comments */
     for (let i = 0, len = comments.length; i < len; ++i) {
       ini_section.nodes.push(new ini.Comment(
         this._comment_prefix, comments[i].toString()
@@ -395,83 +302,6 @@ const Ini = class extends Base {
     }
 
     return 1;
-  }
-
-  /**
-    Compare `_lhs` and `_rhs` to each other, either as regular
-    expressions or strings. Returns null if asked to compare a
-    regular expression to another regular expression.
-    @arg _lhs {String|RegExp} - The value to match against `_lhs`
-    @arg _rhs {String|RegExp} - The value to match against `_rhs`
-  */
-  _match_generic (_lhs, _rhs) {
-
-    if (_lhs instanceof RegExp && _rhs instanceof RegExp) {
-      return null;
-    }
-
-    if (_lhs instanceof RegExp) {
-      return !!_rhs.toString().match(_lhs);
-    }
-
-    if (_rhs instanceof RegExp) {
-      return !!_lhs.toString().match(_rhs);
-    }
-
-    return (_lhs.toString() === _rhs.toString());
-  }
-
-  /**
-  */
-  _match_array (_a, _rhs) {
-
-    let n = 0;
-
-    for (let i = 0, len = _a.length; i < len; ++i) {
-      if (this._match_generic(_a[i], _rhs)) {
-        n++;
-      }
-    }
-
-    return n;
-  }
-
-  /**
-  */
-  _match_pairs_array (_pairs, _tuple) {
-
-    let n = 0;
-
-    for (let i = 0, ln1 = _pairs.length; i < ln1; ++i) {
-      for (let j = 0; j < _tuple.length; ++j) {
-
-        let is_match = (
-          _pairs[i][j] == null ||
-            this._match_generic(_pairs[i][j], _tuple[j])
-        );
-
-        if (is_match) {
-          n++;
-        }
-      }
-    }
-
-    return n;
-  }
-
-  /**
-  */
-  _trim_strings (_strings) {
-
-    let rv = _strings;
-
-    for (var i = 0, len = rv.length; i < len; ++i) {
-      if (typeof rv[i] === 'string') {
-        rv[i] = rv[i].trim();
-      }
-    }
-
-    return rv;
   }
 
   /**
