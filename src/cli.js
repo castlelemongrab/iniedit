@@ -30,7 +30,7 @@ const CLI = class extends Base {
    */
   reset (_options) {
 
-    this._ini = new Ini();
+    this._ini = new Ini.Default();
     this._args = new Arguments();
     this._io = (this.options.io || new IO.Node());
 
@@ -115,7 +115,7 @@ const CLI = class extends Base {
    */
   async _run_command (_args) {
 
-    let rv = 0;
+    let q, rv = 0;
 
     /* Regexp support */
     try {
@@ -127,27 +127,33 @@ const CLI = class extends Base {
     /* Translate to API */
     switch (_args._[0]) {
       case 'read':
+        q = new Ini.Query(
+          _args.x, await this._create_tuple_array(_args.n, _args.r), _args.m
+        );
         rv = this._ini.read_properties(
-          _args.x, await this._create_tuple_array(_args.n, _args.r), _args.m,
-            this._create_boolean_hash(_args.l), _args.c
+          q, this._create_boolean_hash(_args.l), _args.c
         );
         break;
       case 'add':
+        q = new Ini.Query(
+          _args.x, await this._create_tuple_array(_args.n, _args.r), _args.m
+        );
         rv = this._ini.add_section(
-          _args.s, await this._create_tuple_hash(_args.l), _args.c, _args.t,
-            _args.x, await this._create_tuple_array(_args.n, _args.r), _args.m
+          _args.s, await this._create_tuple_hash(_args.l), _args.c, _args.t, q
         );
         break;
       case 'delete':
-        rv = this._ini.delete_section(
+        q = new Ini.Query(
           _args.x, await this._create_tuple_array(_args.n, _args.r), _args.m
         );
+        rv = this._ini.delete_section(q);
         break;
       case 'modify':
+        q = new Ini.Query(
+          _args.x, await this._create_tuple_array(_args.n, _args.r), _args.m
+        );
         rv = this._ini.modify_section(
-          _args.x,
-          await this._create_tuple_array(_args.n, _args.r),
-          _args.m,
+          q,
           this._add_hash_nulls(
             await this._create_tuple_hash(_args.l), _args.d
           ),

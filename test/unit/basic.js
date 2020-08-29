@@ -33,30 +33,40 @@ describe('basic', () => {
 
     let [ ini, io, o, i ] = util.init_fixture_test(chai, 'add-001');
 
-    ini.add_section('Bottom', { A: null, B: 2 }, [ '#=comment#=' ]);
+    ini.add_section(
+      'Bottom', { A: null, B: 2 }, [ '#=comment#=' ]
+    );
 
     ini.add_section(
       'Rematch', { A: 1 }, [], false,
-        [ 'Bottom' ], [[ 'B', '2' ]], [ /#=com+ent#=/ ]
+        new Ini.Query([ 'Bottom' ], [[ 'B', '2' ]], [ /#=com+ent#=/ ])
     );
 
     ini.add_section('Top', { A: 1, B: 'string' }, [], true);
-    ini.add_section('Escape', { Value: '=Equals=' }, [], true, [], [], []);
 
     ini.add_section(
-      'Void', { Value: 0 }, [], true, [ 'Void' ], [], []
+      'Escape', { Value: '=Equals=' }, [], true,
+        new Ini.Query([], [], [])
     );
 
     ini.add_section(
-      'Void', { Value: 1 }, [], true, [], [[ 'Void', 1 ]], []
+      'Void', { Value: 0 }, [], true,
+        new Ini.Query([ 'Void' ], [])
     );
 
     ini.add_section(
-      'Void', { Value: 2 }, [], true, [], [], [ 'Void' ]
+      'Void', { Value: 1 }, [], true,
+        new Ini.Query([], [[ 'Void', 1 ]], [])
     );
 
     ini.add_section(
-      'Void', { Value: 3 }, [], true, [ 'Void' ], [[ 'Void', 1 ]], [ 'Void' ]
+      'Void', { Value: 2 }, [], true,
+        new Ini.Query([], [], [ 'Void' ])
+    );
+
+    ini.add_section(
+      'Void', { Value: 3 }, [], true,
+        new Ini.Query([ 'Void' ], [[ 'Void', 1 ]], [ 'Void' ])
     );
 
     ini.serialize();
@@ -67,16 +77,24 @@ describe('basic', () => {
 
     let [ ini, io, o, i ] = util.init_fixture_test(chai, 'delete-001');
 
-    ini.delete_section([ 'B' ]);
-    ini.delete_section([ 'W', 'WW' ]);
-    ini.delete_section([ 'X', 'XX' ], [[ 'A', 1 ], [ 'B', 2 ]]);
-    ini.delete_section([ 'Y', 'YY', /YY+/ ]);
-    ini.delete_section([ 'Z', /ZZ+$/ ], [[ 'A', /st?r?/ ]], [ /^C+.*C?$/ ]);
-    ini.delete_section([], [], [ 'remove' ]);
-    ini.delete_section([], [['Foo', 'Remove' ]]);
-    ini.delete_section([], [[ /^Dele?t?e?$/, /.*/ ]], [ /^regexp propert(y|(ies+))/ ]);
-    ini.delete_section([ 'D' ], [['Baz', /N?o?Remo+ve/ ]]);
-    ini.delete_section([], [], [ '  Comment  ' ]);
+    ini.delete_section(new Ini.Query([ 'B' ]));
+    ini.delete_section(new Ini.Query([ 'W', 'WW' ]));
+    ini.delete_section(new Ini.Query([ 'X', 'XX' ], [[ 'A', 1 ], [ 'B', 2 ]]));
+    ini.delete_section(new Ini.Query([ 'Y', 'YY', /YY+/ ]));
+
+    ini.delete_section(
+      new Ini.Query([ 'Z', /ZZ+$/ ], [[ 'A', /st?r?/ ]], [ /^C+.*C?$/ ])
+    );
+
+    ini.delete_section(new Ini.Query([], [], [ 'remove' ]));
+    ini.delete_section(new Ini.Query([], [['Foo', 'Remove' ]]));
+
+    ini.delete_section(
+      new Ini.Query([], [[ /^Dele?t?e?$/, /.*/ ]], [ /^regexp propert(y|(ies+))/ ])
+    );
+
+    ini.delete_section(new Ini.Query([ 'D' ], [['Baz', /N?o?Remo+ve/ ]]));
+    ini.delete_section(new Ini.Query([], [], [ '  Comment  ' ]));
 
     ini.serialize();
     expect(io.toString()).to.equal(o);
@@ -88,42 +106,43 @@ describe('basic', () => {
     let [ ini, io, o, i ] = util.init_fixture_test(chai, 'modify-001');
 
     ini.modify_section(
-      [ 'A' ], [[ 'A', 'B' ]], [],
+      new Ini.Query([ 'A' ], [[ 'A', 'B' ]], []),
         { C: 'D' }
     );
 
     ini.modify_section(
-      [ 'B' ], [], [ 'Comment' ],
+      new Ini.Query([ 'B' ], [], [ 'Comment' ]),
         { A: null, C: 2 }, { Comment: null }
     );
 
     ini.modify_section(
-      [], [[ 'Unique', /D/ ], [ 'E', 'F' ]], [],
+      new Ini.Query([], [[ 'Unique', /D/ ], [ 'E', 'F' ]], []),
         { A: 1, E: 3, Unique: null }, { Comment: true }
     );
 
     ini.modify_section(
-      [], [[ /A{1,3}/, 'X' ], [ 'C', 'Y' ], [ 'E', /ZZ*/ ]], [ /^Add/ ],
-        { A: null, Added: 1 }, { Modified: true }
+      new Ini.Query(
+        [], [[ /A{1,3}/, 'X' ], [ 'C', 'Y' ], [ 'E', /ZZ*/ ]], [ /^Add/ ]
+      ), { A: null, Added: 1 }, { Modified: true }
     );
 
     ini.modify_section(
-      [ /E{1,2}/ ], [[ /A+B*/, /\w/ ]], [ /E+/ ],
+      new Ini.Query([ /E{1,2}/ ], [[ /A+B*/, /\w/ ]], [ /E+/ ]),
         { C: 1 }, { EE: null, E: 1 }
     );
 
     ini.modify_section(
-      [ 'Multiple' ], [], [],
+      new Ini.Query([ 'Multiple' ], [], []),
         { A: null, C: null }
     );
 
     ini.modify_section(
-      [], [[ /Multi.*/, /Multi.*/ ]], [],
+      new Ini.Query([], [[ /Multi.*/, /Multi.*/ ]], []),
         { A: 'A', X: 'XX', Multiple: 1, Multi: null }, {}, 'X'
     );
 
     ini.modify_section(
-      [ 'Rename' ], [], [],
+      new Ini.Query([ 'Rename' ], [], []),
         {}, {}, 'Renamed Section'
     );
 
@@ -138,7 +157,7 @@ describe('basic', () => {
     let [ ini, io, o, i ] = util.init_fixture_test(chai, 'read-001');
 
     ini.read_properties(
-      [], [], [], { Key: true }, false
+      new Ini.Query([], [], []), { Key: true }, false
     );
 
     expect(io.toString()).to.equal(o);

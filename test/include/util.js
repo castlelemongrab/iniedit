@@ -45,7 +45,7 @@ const init_fixture_test = (_chai, _name) => {
   );
 
   let io = new IO.NodePlug();
-  let ini = new Ini(i, { io: io });
+  let ini = new Ini.Default(i, { io: io });
 
   return [ ini, io, o, i ];
 }

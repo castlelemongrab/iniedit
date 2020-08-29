@@ -6,6 +6,9 @@ let Query = require('./query');
 let ini = require('@jedmao/ini-parser');
 
 /**
+  Transform the `ini-parser` abstract syntax tree one or more times
+  using one or more `Query` objects. Note that this object necessarily
+  knows about the query's internals; it is tightly coupled.
 **/
 const Transform = class extends Base {
 
