@@ -200,7 +200,7 @@ const Ini = class extends Base {
         /* Increment section match count */
         rv++;
 
-        /* Perform transform; break on false return value*/
+        /* Perform transform; break on false return value */
         if (!_fn(i, section)) {
           break;
         }

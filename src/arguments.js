@@ -93,7 +93,7 @@ const Arguments = class extends Base {
             array: true,
             type: 'string',
             alias: 'line',
-            describe: 'The property/line values to read'
+            describe: 'A line name to read data from'
           },
           c: {
             type: 'boolean',
