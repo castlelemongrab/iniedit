@@ -8,7 +8,7 @@ Introduction
 The `iniedit` utility is a small program for adding, updating, and deleting
 sections and/or entries in Common INI Format files. It provides a Javascript
 API and command-line interface, and allows for conditional criteria to be
-specified as preconditions for any section modifiction, addition, or deletion
+specified as preconditions for any section modification, addition, or deletion
 operation.
 
 This repository is a work in progress and absolutely should not be used in
@@ -185,13 +185,12 @@ API Documentation
 
 <a name="constructor" />
 <h3><pre>
-ini
+Ini.Default
 </pre></h3>
 
 ```typescript
-ini = new Ini(_string: String, _options: Object)
+let ini = new Ini.Default(_string: String, _options: Object)
 ```
-
 <p>
 Create a new instance of the INI file modification engine.
 </p>
@@ -206,6 +205,54 @@ Create a new instance of the INI file modification engine.
     </dd>
 </dl>
 
+<a name="query" />
+<h3><pre>
+Ini.Query
+</pre></h3>
+
+```typescript
+let q = new Ini.Query(
+  _sections: Array<String|RegExp>?,
+  _where: Array<[ String|RegExp, String|RegExp ]>?,
+  _comments: Array<String|RegExp>?
+);
+```
+<p>
+Create a search query predicate for use with the `Ini.Default` methods
+<a href="#add_section"><code>add_section</code></a>,
+<a href="#delete_section"><code>delete_section</code></a>,
+<a href="#modify_section"><code>modify_section</code></a>, or
+<a href="#read_properties"><code>read_properties</code></a>,
+</p>
+<dl>
+  <dt><code>_sections</code></dt>
+  <dd>
+    <i>Optional</i>: An array of section names that should be matched
+    against the section names in the INI file.. Values are case-sensitive
+    strings and/or regular expressions. This is an OR operation; of any
+    one of the specified criteria matches, the section matches.
+  </dd>
+  <dt><code>_where</code></dt>
+  <dd>
+    <i>Optional</i>: An array of two-tuple (key/value pair) properties
+    that must match in order for the the transformation to be applied.
+    Both keys and values are case-sensitive, and may be strings or regular
+    expressions. THis criteria is combined via AND: all clauses must match
+    in order for a section to match.
+  </dd>
+  <dt><code>_comment_where</code></dt>
+  <dd>
+    <i>Optional</i>: An array of comment text that must exist for a match
+    to occur. Values are case-sensitive text and/or regular expressions.
+    These are ANDed together; all must exist independentely and match.
+  </dd>
+</dl>
+<p>
+Create a new query for the INI file transformation system. 
+</p>
+<dl>
+</dl>
+
 <a name="parse" />
 <h3><pre>
 ini.parse
@@ -214,21 +261,14 @@ ini.parse
 ```typescript
 ini.parse(_string: String)
 ```
-
 <p>
-Parse an INI file from a <code>String</code> or <code>Buffer</code>.
+Create an internal abstract syntax tree from the INI file contents specified
+in `_string`.
 </p>
-<dl>
-  <dt><code>_string</code></dt>
-    <dd>
-      <i>Optional</i>:
-      Contents of the INI file to parse into an internal syntax tree
-    </dd>
-</dl>
 
 <a name="serialize" />
 <h3><pre>
-ini.serialize()
+ini.serialize
 </pre></h3>
 <p>
 Emit the internal abstract syntax tree, using this instance's <code>IOH</code>
@@ -236,45 +276,29 @@ object.  To capture or redirect output, provide an <code>IOH</code> instance
 via the constructor's <code>_options.io</code> parameter.
 </p>
 
-<a name="transform_section" />
+
+<a name="transformer" />
 <h3><pre>
-ini.transform_section
+Ini.Transformer
 </pre></h3>
 
 ```typescript
-ini.transform_section(
-  _sections: Array<String|RegExp>?,
-    _where: Array<[ String|RegExp, String|RegExp ]>?,
-    _comment_where: Array<String|RegExp>?,
-    _fn: Function(_i: Number, _section: Object)
+let transform = new transformer(ini.tree);
+transform.run(
+  _query: Ini.Query, _fn: Function(_i: Number, _section: Object)
 )
 ```
-
 <p>
 Call <code>_fn</code> and allow it to modify any section of the parsed INI
 file's abstract syntax tree if the predicates provided match. A set of
 entirely empty predicates will match any and all sections.
 </p>
 <dl>
-  <dt><code>_sections</code></dt>
+  <dt><code>_query</code></dt>
   <dd>
-    <i>Optional</i>: An array of section names to which the
-    transformation should apply. Values are case-sensitive section names
-    and/or regular expressions. These are ORed together; any can match.
-  </dd>
-  <dt><code>_where</code></dt>
-  <dd>
-    <i>Optional</i>: An array of two-tuple (key/value pair) properties
-    that must match in order for the the transformation to be applied.
-    Both keys and values are case-sensitive, and may be strings or regular
-    expressions. These matches are ANDed together; all clauses must match
-    in order for a section to have a transformation applied.
-  </dd>
-  <dt><code>_comment_where</code></dt>
-  <dd>
-    <i>Optional</i>: An array of comment text to which the
-    transformation should apply. Values are case-sensitive comment text
-    and/or regular expressions. These are ANDed together; all must match.
+    <i>Optional</i>: An instance of Ini.Query specifying matching criteria
+    for the modifications requested. If a section does not match, it will
+    not be modified.
   </dd>
   <dt><code>_fn</code></dt>
   <dd>
@@ -292,23 +316,22 @@ ini.delete_section
 
 ```typescript
 ini.delete_section(
-  _sections: Array<String|RegExp>?,
-    _where: Array<[k: String|RegExp, v: String|RegExp]>?,
-    _comment_where: Array<String|RegExp>?
+  _query: Ini.Query
 )
+
 ```
 
 <p>
-Remove an INI file section that matches the <code>_sections</code>,
-<code>_where</code>, and <code>_comment_where</code> criteria.
+Remove an INI file section that matches the query <code>_query</code>,
 </p>
 <dl>
-  <dt><code>_sections, _where, _comment_where</code></dt>
+  <dt><code>_query</code></dt>
   <dd>
-    For information on what these arguments mean and how they are structured,
-    see the <a href="#transform_section"><code>transform_section</code></a>
-    method.
-    </dd>
+    <i>Optional</i>: An instance of Ini.Query specifying matching criteria
+    for the modifications requested. If a section does not match, it will
+    not be altered in any way.
+  </dd>
+  <dt><code>_query</code></dt>
 </dl>
 
 
@@ -319,9 +342,7 @@ ini.modify_section
 
 ```typescript
 ini.modify_section(
-  _sections: Array<String|RegExp>?,
-    _where: Array<[k: String|RegExp, v: String|RegExp]>?,
-    _comment_where: Array<String|RegExp>?,
+  _query: Ini.Query,
     _properties: Object?, _comments: Object?, _name: String?
 )
 ```
@@ -331,11 +352,11 @@ Modify an INI file section that matches the <code>_sections</code>,
 <code>_where</code>, and <code>_comment_where</code> criteria.
 </p>
 <dl>
-  <dt><code>_sections, _where, _comment_where</code></dt>
+  <dt><code>_query</code></dt>
   <dd>
-    For information on what these arguments mean and how they are structured,
-    see the <a href="#transform_section"><code>transform_section</code></a>
-    method.
+    <i>Optional</i>: An instance of Ini.Query specifying matching criteria
+    for the modifications requested. If a section does not match, it will
+    not be altered in any way.
   </dd>
   <dt><code>_properties</code></dt>
   <dd>
@@ -369,13 +390,9 @@ ini.add_section
 ```typescript
 ini.add_section(
   _name: String, _properties: Object?,
-  _comments: Object?, _should_prepend: Boolean?,
-  _sections: Array<String|RegExp>?,
-    _where: Array<[ String|RegExp, String|RegExp ]>?,
-    _comment_where: Array<String|RegExp>?
+  _comments: Object?, _should_prepend: Boolean?, _query: Ini.Query?
 )
 ```
-
 <p>
 Add a new section to an INI file, provided that the <code>_sections</code>,
 <code>_where</code>, and <code>_comment_where</code> criteria match at least
@@ -399,21 +416,22 @@ empty, this function considers it a match, and adds the requested section.
     file). False or false-like if the section should be appended to the
     abstract syntax tree (and therefore at the bottom of the resulting file).
   </dd>
-  <dt><code>_sections, _where, _comment_where</code></dt>
+  <dt><code>_query</code></dt>
   <dd>
-    <i>Optional</i>: A predicate match for conditional section addition.
-    For information on what these arguments mean and how they are structured,
-    see the <a href="#transform_section"><code>transform_section</code></a>
-    method.
+    <i>Optional</i>: An instance of Ini.Query specifying matching criteria
+    for the modifications requested. If a section does not match, it will
+    not be altered in any way.
   </dd>
 </dl>
 
+<a name="read_properties" />
+<h3><pre>
+ini.read_properties
+</pre></h3>
+
 ```typescript
 ini.read_properties(
-  _sections: Array<String|RegExp>?,
-    _where: Array<[ String|RegExp, String|RegExp ]>?,
-    _comment_where: Array<String|RegExp>?,
-    _names: Object, _comments: Boolean?
+  _query: Ini.Query?, _names: Object, _comments: Boolean?
 )
 ```
 <p>
@@ -423,11 +441,11 @@ print the value of any property name that appears in <code>_names</code>.
 Emit results to the current IO object (or standard ourpur) in file order.
 </p>
 <dl>
-  <dt><code>_sections, _where, _comment_where</code></dt>
+  <dt><code>_query</code></dt>
   <dd>
-    For information on what these arguments mean and how they are structured,
-    see the <a href="#transform_section"><code>transform_section</code></a>
-    method.
+    <i>Optional</i>: An instance of Ini.Query specifying matching criteria
+    for the modifications requested. If a section does not match, it will
+    not be altered in any way.
   </dd>
   <dt><code>_names</code></dt>
     An object containing property names as keys; values for these keys will
@@ -440,8 +458,6 @@ Emit results to the current IO object (or standard ourpur) in file order.
     included in the output in file order. Comments will appear in file order.
   </dd>
 </dl>
-
-
 
 Credits
 -------
